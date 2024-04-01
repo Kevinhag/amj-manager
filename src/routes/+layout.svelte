@@ -21,9 +21,10 @@
 
 <nav class="nav-main">
 	<a href="/">Painel</a>
-	<a href="/parts">OS</a>
+	<a href="/os">OS</a>
 	<a href="/clients">Clientes</a>
 
+	<a href="/cars">Carros</a>
 	<a href="/parts">Peças</a>
 	<a href="/report">Relatórios</a>
 	<a href="/svelte">Pesquisar</a>
@@ -44,8 +45,7 @@
 {/if}
 
 <style lang="scss">
-	@import url('https://fonts.googleapis.com/css2?family=Jura:wght@300..700&family=Kanit:wght@100;200;300;400&family=Roboto:ital,wght@0,100;0,400;0,900;1,100;1,400;1,900&family=Titillium+Web:ital,wght@0,200;0,300;0,400;0,600;0,700;0,900;1,200;1,300;1,400;1,600;1,700&display=swap');
-
+	@import url('https://fonts.googleapis.com/css2?family=Jura:wght@300..700&family=Kanit:wght@100;200;300;400&family=Roboto+Mono:ital,wght@0,100..700;1,100..700&family=Roboto:ital,wght@0,100;0,400;0,900;1,100;1,400;1,900&family=Titillium+Web:ital,wght@0,200;0,300;0,400;0,600;0,700;0,900;1,200;1,300;1,400;1,600;1,700&display=swap');
 	:global(body) {
 		margin: 0;
 		padding: 0;
@@ -65,21 +65,23 @@
 		height: 100%;
 	}
 
+	:global(.dim) {
+		filter: blur(5px) brightness(0.5);
+	}
 	:global(.parts-popup) {
-    position: fixed;
-	justify-content: center;
-    top: 50%;
-    left: 50%;
-	width: 70%;
-    transform: translate(-50%, -50%);
-    background-color: $bgcolor;
-    padding: 10px;
-    border-radius: 5px;
-    box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.6);
-    border: 1px solid grey;
-    z-index: 9999;
-
-}
+		position: fixed;
+		justify-content: center;
+		top: 50%;
+		left: 50%;
+		width: 70%;
+		transform: translate(-50%, -50%);
+		background-color: $bgcolor;
+		padding: 10px;
+		border-radius: 5px;
+		box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.6);
+		border: 1px solid grey;
+		z-index: 9999;
+	}
 
 	.slot {
 		width: 100%;
