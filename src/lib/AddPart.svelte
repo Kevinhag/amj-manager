@@ -13,6 +13,71 @@
 				console.log(data);
 			});
 	});
+	function addPart() {
+		const newPart = {
+			nome: name,
+			marca: brand
+		};
+
+		fetch('http://localhost:3000/api/parts', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify(newPart)
+		})
+		.then((response) => response.json())
+		.then((data) => {
+			console.log('Part added:', data);
+			// Reset selectedPartData and selectedPart
+			selectedPartData = null;
+			selectedPart = '';
+		})
+		.catch((error) => {
+			console.error('Error adding part:', error);
+		});
+	}
+
+	function updatePart() {
+		const updatedPart = {
+			id: selectedPartData.id,
+			nome: selectedPartData.nome,
+			marca: selectedPartData.marca
+		};
+
+		fetch(`http://localhost:3000/api/parts/${selectedPartData.id}`, {
+			method: 'PUT',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify(updatedPart)
+		})
+		.then((response) => response.json())
+		.then((data) => {
+			console.log('Part updated:', data);
+			// Reset selectedPartData and selectedPart
+			selectedPartData = null;
+			selectedPart = '';
+		})
+		.catch((error) => {
+			console.error('Error updating part:', error);
+		});
+	}
+
+	function deletePart() {
+		fetch(`http://localhost:3000/api/parts/${selectedPartData.id}`, {
+			method: 'DELETE'
+		})
+		.then((response) => {
+			console.log('Part deleted');
+			// Reset selectedPartData and selectedPart
+			selectedPartData = null;
+			selectedPart = '';
+		})
+		.catch((error) => {
+			console.error('Error deleting part:', error);
+		});
+	}
 
 	$: selectedPartData = parts.find((part) => part.id == selectedPart);
 
@@ -51,7 +116,7 @@
 				{#if selectedPartData != null}
 					<button type="submit">Alterar Peça</button>
 				{:else}
-					<button type="submit">Adicionar Peça</button>
+					<button type="submit" on:click={addPart}>Adicionar Peça</button>
 				{/if}
 				{#if selectedPartData != null}
 				<button on:click={() => (selectedPartData = null)}>Nova Peça</button>

@@ -1,6 +1,9 @@
 <script>
 	import { onMount } from 'svelte';
 	import Reorderable from '$lib/Reorderable.svelte';
+	// import html2canvas from 'html2canvas';
+	// import jsPDF from 'jspdf';
+
 
 	let parts = [];
 	let cars = [];
@@ -21,6 +24,38 @@
 
 	let searchQuery = '';
 	let searchPartQuery = '';
+
+
+	function exportData() {
+				const data = {
+					selectedCarData,
+					selectedClientData,
+					addedParts,
+				};
+
+				// Convert the data to a JSON string
+				const jsonData = JSON.stringify(data);
+
+				// Create a new anchor element
+				const anchor = document.createElement('a');
+
+				// Set the anchor's href attribute to a data URL containing the JSON data
+				anchor.href = `data:text/json;charset=utf-8,${encodeURIComponent(jsonData)}`;
+
+				// Set the anchor's download attribute to specify the filename
+				anchor.download = 'data.json';
+
+				// Programmatically click the anchor to trigger the download
+				anchor.click();
+
+				// Export the data to PDF
+				html2canvas(document.body).then((canvas) => {
+					const imgData = canvas.toDataURL('image/png');
+					const pdf = new jsPDF();
+					pdf.addImage(imgData, 'PNG', 0, 0);
+					pdf.save('data.pdf');
+				});
+			}
 
 	onMount(() => {
 		fetch('http://localhost:3000/api/cars')
@@ -78,12 +113,16 @@
 	<h1>{mainInfo}</h1>
 	<section>
 		<div>
-			<div class="form person2">
-				Pesquisar Cliente:
-				<input type="text" id="search" on:input={handleClientSearch} />
+			<div class="form-base">
+				<h2>Clientes:</h2>
 
-				Clientes:
-				<select name="clients" id="clients" size="5" bind:value={selectedClient}>
+				<input
+					type="text"
+					id="search"
+					placeholder="Pesquisar Cliente:"
+					on:input={handleClientSearch}
+				/>
+				<select name="clients" id="clients" size="6" bind:value={selectedClient}>
 					{#if clients.length === 0}
 						<p>Nenhum item encontrado</p>
 					{:else}
@@ -92,20 +131,26 @@
 						{/each}
 					{/if}
 				</select>
-				<div class="form-client">
+				<div class="form-details">
 					{#if selectedClientData}
-						<h3>Cliente</h3>
-						<p>Nome: {selectedClientData.nome}</p>
-						<p>CPF: {selectedClientData.cpf}</p>
-						<p>Telefone: {selectedClientData.tel}</p>
-						<p>Cidade: {selectedClientData.cidade}</p>
+						Nome: {selectedClientData.nome}
+						<br />
+						CPF: {selectedClientData.cpf}
+						<br />
+						Telefone: {selectedClientData.tel}
+						<br />
+						Cidade: {selectedClientData.cidade}
+						<br />
 					{:else}
 						<h3>Nenhum Cliente Selecionado.</h3>
 					{/if}
 				</div>
 			</div>
-			<div class="cars-list">
-				<select name="cars" id="cars" size="3" bind:value={selectedCar}>
+		</div>
+		<div>
+			<div class="form-base">
+				<h2>Carros:</h2>
+				<select name="cars" id="cars" size="2" bind:value={selectedCar}>
 					{#each cars.filter((car) => car.cliente_id == selectedClient) as car (car.id)}
 						<option value={car.id}>
 							{car.marca +
@@ -118,26 +163,33 @@
 						</option>
 					{/each}
 				</select>
-				<div class="form-car">
+				<div class="form-details">
 					{#if selectedCarData}
-						<p>Marca: {selectedCarData.marca}</p>
-						<p>Modelo: {selectedCarData.modelo}</p>
-						<p>Placa: {selectedCarData.ano}</p>
-						<p>Placa: {selectedCarData.ano}</p>
-						<p>Placa: {selectedCarData.placa}</p>
+						Marca: {selectedCarData.marca}
+						<br />
+						Modelo: {selectedCarData.modelo}
+						<br />
+						Ano: {selectedCarData.ano}
+						<br />
+						Placa: {selectedCarData.placa}
+						<br />
 						{#if selectedCarData.obsretifica}
-							<p>Placa: {selectedCarData.observacao}</p>
+							<p>Observação: {selectedCarData.observacao}</p>
 						{/if}
 					{/if}
 				</div>
 			</div>
-		</div>
-		<div>
 			<div class="part-list">
-				Pesquisar Peças:
-				<input type="text" id="search" on:input={handlePartSearch} />
+				<h2>Peças:</h2>
 
-				<select name="parts" id="parts" size="10" bind:value={selectedPart}>
+				<input
+					type="text"
+					id="search"
+					placeholder="Pesquisar Peças:"
+					on:input={handlePartSearch}
+				/>
+
+				<select name="parts" id="parts" size="4" bind:value={selectedPart}>
 					{#each filteredParts as part (part.id)}
 						<option value={part.id}>
 							{part.marca}&nbsp;&nbsp; - &nbsp;&nbsp;{part.nome}
@@ -146,11 +198,10 @@
 				</select>
 				<button class="add-part" on:click={addPartList}>Adicionar Peça</button>
 			</div>
-			<div>services</div>
 		</div>
 		<div>
-			<div class="os">
-				<h3>Ordem de Serviço</h3>
+			<div class="form-base">
+				<h2>Ordem de Serviço:</h2>
 
 				<!-- {#if selectedPartData}
 					<p>{selectedPartData.marca}</p>
@@ -164,13 +215,13 @@
 						console.log(value);
 					}}
 				/>
-
-				{#if addedParts}
+				<button on:click={exportData}>Gerar OS</button>
+				<!-- {#if addedParts}
 					<h3>Peças adicionadas</h3>
 					{#each addedParts as part}
 						<p>{part}</p>
 					{/each}
-				{/if}
+				{/if} -->
 			</div>
 		</div>
 	</section>
@@ -184,7 +235,7 @@
 		gap: 1rem;
 		width: 100%;
 		height: 100%;
-		background-color: $colora;
+		// background-color: $colora;
 	}
 
 	.text {
@@ -195,7 +246,7 @@
 		background-color: $darker;
 		width: 15px;
 	}
-	.form-client {
+	.form-details {
 		background-color: $darker;
 		display: flex;
 		flex-direction: column;
@@ -205,6 +256,7 @@
 		border: 1px solid $color;
 		gap: 10px;
 		height: 200px;
+		width: 100%;
 	}
 	.form-car {
 		background-color: $darker;
@@ -215,7 +267,24 @@
 		border-radius: 10px;
 		border: 1px solid $color;
 		gap: 10px;
-		height: 200px;
+		height: 150px;
 	}
 
+	.form-base {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 10px;
+	}
+
+	#clients {
+		width: 100%;
+		height: 100%;
+	}
+
+	#cars {
+		width: 100%;
+		height: 62px;
+	}
 </style>

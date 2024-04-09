@@ -16,6 +16,56 @@
 
 	$: selectedCarData = cars.find((car) => car.id == selectedCar);
 
+
+	function addOrUpdateCar() {
+		if (selectedCarData != null) {
+			// Alterar Carro
+			fetch(`http://localhost:3000/api/cars/${selectedCarData.id}`, {
+				method: 'PUT',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify(selectedCarData)
+			})
+				.then((response) => response.json())
+				.then((data) => {
+					alert('Carro alterado com sucesso!');
+					console.log('Car updated:', data);
+				})
+				.catch((error) => {
+					alert(error.message)
+					console.error('Error updating car:', error);
+				});
+		} else {
+			
+			const newCarData = {
+				modelo: '',
+				marca: '',
+				placa: '',
+				ano: '',
+				km: '',
+				potencia: '',
+				observacao: '',
+				obsretifica: ''
+			};
+
+			fetch('http://localhost:3000/api/cars', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify(newCarData)
+			})
+				.then((response) => response.json())
+				.then((data) => {
+					alert('Carro adicionado com sucesso!');
+					console.log('Car added:', data);
+				})
+				.catch((error) => {
+					console.error('Error adding car:', error);
+				});
+		}
+	}
 	// $: console.log('Selected Part:', selectedCar);
 	// $: console.log('Selected Part Data:', selectedCarData);
 </script>
@@ -47,11 +97,65 @@
 					<input type="text" id="brand" />
 				{/if}
 			</div>
+			<div class="form-part">
+				<label for="plate">Placa</label>
+				{#if selectedCarData != null}
+					<input type="text" id="plate" bind:value={selectedCarData.placa} />
+				{:else}
+					<input type="text" id="plate" />
+				{/if}
+			</div>
+
+			<div class="form-part">
+				<label for="plate">Ano</label>
+				{#if selectedCarData != null}
+					<input type="text" id="year" bind:value={selectedCarData.ano} />
+				{:else}
+					<input type="text" id="year" />
+				{/if}
+			</div>
+
+			<div class="form-part">
+				<label for="plate">Kilometragem</label>
+				{#if selectedCarData != null}
+					<input type="text" id="km" bind:value={selectedCarData.km} />
+				{:else}
+					<input type="text" id="km" />
+				{/if}	
+			</div>
+
+			<div class="form-part">
+				<label for="plate">Potência</label>
+				{#if selectedCarData != null}
+					<input type="text" id="potencia" bind:value={selectedCarData.potencia} />
+				{:else}
+					<input type="text" id="potencia" />
+				{/if}
+			</div>
+
+			<div class="form-part">
+				<label for="plate">Observação</label>
+				{#if selectedCarData != null}
+					<input type="text" id="obs" bind:value={selectedCarData.observacao} />
+				{:else}
+					<input type="text" id="obs" />
+				{/if}
+			</div>
+
+			<div class="form-part">
+				<label for="plate">Observação Retífica</label>
+				{#if selectedCarData != null}
+					<input type="text" id="obsretifica" bind:value={selectedCarData.obsretifica} />
+				{:else}
+					<input type="text" id="obsretifica" />
+				{/if}
+			</div>
+
 			<div>
 				{#if selectedCarData != null}
-					<button type="submit">Alterar Peça</button>
+					<button type="submit" on:click={addOrUpdateCar}>Alterar Peça</button>
 				{:else}
-					<button type="submit">Adicionar Peça</button>
+					<button type="submit" on:click={addOrUpdateCar}>Adicionar Peça</button>
 				{/if}
 				{#if selectedCarData != null}
 					<button on:click={() => (selectedCarData = null)}>Nova Peça</button>
@@ -127,15 +231,33 @@
 			}
 			.part-add {
 				display: flex;
-				flex-direction: column;
+				// flex-direction: row;
 				justify-content: center;
 				background-color: #44444433;
+				flex-wrap: wrap;
 				width: 100%;
 				height: 100%;
 				gap: 10px;
 				padding: 20px;
-				border: 1px solid $bgtestg;
+				border: 1px solid #cccccc33;
 				border-radius: 10px;
+				
+				.form-part {
+					width: 40%; 
+					// background-color: $bgtestg;
+					display: flex;
+					flex-direction: column;
+					gap: 5px;
+					label {
+						color:ghostwhite;
+					}
+					input {
+						font: 700 14px "Roboto Mono", Arial, sans-serif;
+						padding: 5px;
+						border-radius: 5px;
+						border: 1px solid #cccccc33;
+					}
+				}
 			}
 		}
 	}

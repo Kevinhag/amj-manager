@@ -76,6 +76,20 @@ app.get('/api/parts', async (req, res) => {
 	}
 });
 
+app.post('/api/parts', (req, res) => {
+	const { nome, marca } = req.body;
+	db.run(
+		`INSERT INTO peca (nome, marca) VALUES (?, ?)`,
+		[nome, marca],
+		function (err) {
+			if (err) {
+				return res.status(500).json({ error: err.message });
+			}
+			return res.json({ id: this.lastID });
+		},
+	);
+});
+
 app.post('/api/data', (req, res) => {
 	const { name, age, address } = req.body;
 	db.run(
