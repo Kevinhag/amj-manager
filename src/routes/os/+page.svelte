@@ -164,6 +164,7 @@
 					{/each}
 				</select>
 				<div class="form-details">
+					
 					{#if selectedCarData}
 						Marca: {selectedCarData.marca}
 						<br />
@@ -176,12 +177,17 @@
 						{#if selectedCarData.obsretifica}
 							<p>Observação: {selectedCarData.observacao}</p>
 						{/if}
+						{#if selectedCarData.obsretifica}
+							<p>Observação Retífica: {selectedCarData.obsretifica}</p>
+						{/if}
+					{:else}
+						<h3>Nenhum Carro Selecionado.</h3>
 					{/if}
+
 				</div>
 			</div>
 			<div class="part-list">
 				<h2>Peças:</h2>
-
 				<input
 					type="text"
 					id="search"
@@ -202,12 +208,6 @@
 		<div>
 			<div class="form-base">
 				<h2>Ordem de Serviço:</h2>
-
-				<!-- {#if selectedPartData}
-					<p>{selectedPartData.marca}</p>
-					<p>{selectedPartData.nome}</p>
-					<p>{selectedPartData.valor}</p>
-				{/if} -->
 				<Reorderable
 					bind:list={addedParts}
 					update={(value) => {
@@ -216,12 +216,6 @@
 					}}
 				/>
 				<button on:click={exportData}>Gerar OS</button>
-				<!-- {#if addedParts}
-					<h3>Peças adicionadas</h3>
-					{#each addedParts as part}
-						<p>{part}</p>
-					{/each}
-				{/if} -->
 			</div>
 		</div>
 	</section>

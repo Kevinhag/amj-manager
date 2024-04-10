@@ -16,16 +16,15 @@
 
 	$: selectedCarData = cars.find((car) => car.id == selectedCar);
 
-
 	function addOrUpdateCar() {
 		if (selectedCarData != null) {
 			// Alterar Carro
 			fetch(`http://localhost:3000/api/cars/${selectedCarData.id}`, {
 				method: 'PUT',
 				headers: {
-					'Content-Type': 'application/json'
+					'Content-Type': 'application/json',
 				},
-				body: JSON.stringify(selectedCarData)
+				body: JSON.stringify(selectedCarData),
 			})
 				.then((response) => response.json())
 				.then((data) => {
@@ -33,11 +32,10 @@
 					console.log('Car updated:', data);
 				})
 				.catch((error) => {
-					alert(error.message)
+					alert(error.message);
 					console.error('Error updating car:', error);
 				});
 		} else {
-			
 			const newCarData = {
 				modelo: '',
 				marca: '',
@@ -46,15 +44,15 @@
 				km: '',
 				potencia: '',
 				observacao: '',
-				obsretifica: ''
+				obsretifica: '',
 			};
 
 			fetch('http://localhost:3000/api/cars', {
 				method: 'POST',
 				headers: {
-					'Content-Type': 'application/json'
+					'Content-Type': 'application/json',
 				},
-				body: JSON.stringify(newCarData)
+				body: JSON.stringify(newCarData),
 			})
 				.then((response) => response.json())
 				.then((data) => {
@@ -121,7 +119,7 @@
 					<input type="text" id="km" bind:value={selectedCarData.km} />
 				{:else}
 					<input type="text" id="km" />
-				{/if}	
+				{/if}
 			</div>
 
 			<div class="form-part">
@@ -169,7 +167,13 @@
 			<select name="cars" id="cars" size="10" bind:value={selectedCar}>
 				{#each cars as car (car.id)}
 					<option value={car.id}>
-						{car.marca + '\xa0'.repeat(15 - (car.marca.length)) + '\xa0'.repeat(5) + car.modelo + '\xa0'.repeat(15 - car.modelo.length) +car.placa + '\xa0'.repeat(15 - (car.marca.length))}
+						{car.marca +
+							'\xa0'.repeat(15 - car.marca.length) +
+							'\xa0'.repeat(5) +
+							car.modelo +
+							'\xa0'.repeat(15 - car.modelo.length) +
+							car.placa +
+							'\xa0'.repeat(15 - car.marca.length)}
 					</option>
 				{/each}
 			</select>
@@ -202,7 +206,6 @@
 		}
 		.main {
 			display: grid;
-
 			grid-template-columns: 1fr 1fr;
 			justify-content: space-evenly;
 			gap: 20px;
@@ -213,8 +216,7 @@
 				height: 100%;
 			}
 
-			.part-list {
-                
+			.cars-list {
 				display: flex;
 				flex-direction: column;
 				justify-content: center;
@@ -225,9 +227,9 @@
 				// padding: 20px;
 				border: 1px solid $bgtestg;
 				border-radius: $radius;
-                select{
-                    font: 700 14px "Roboto Mono", Arial, sans-serif;
-                }
+				select {
+					font: 700 14px 'Roboto Mono', Arial, sans-serif;
+				}
 			}
 			.part-add {
 				display: flex;
@@ -241,18 +243,18 @@
 				padding: 20px;
 				border: 1px solid #cccccc33;
 				border-radius: 10px;
-				
+
 				.form-part {
-					width: 40%; 
+					width: 40%;
 					// background-color: $bgtestg;
 					display: flex;
 					flex-direction: column;
 					gap: 5px;
 					label {
-						color:ghostwhite;
+						color: ghostwhite;
 					}
 					input {
-						font: 700 14px "Roboto Mono", Arial, sans-serif;
+						font: 700 14px 'Roboto Mono', Arial, sans-serif;
 						padding: 5px;
 						border-radius: 5px;
 						border: 1px solid #cccccc33;

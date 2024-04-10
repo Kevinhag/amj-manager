@@ -96,6 +96,10 @@
 				<div class="item" draggable={true}  id={item.key} on:dragstart|self={pickItem} on:touchstart|self={(e) => pickItem(e, true)}>
 
 					<div class="text" title="Edit">{item}</div>
+					<input type="number" name="quantity" id="quantity" placeholder="QTT">
+					<input type="text" name="price" id="price" placeholder="Preço">
+					<button>DEL</button>
+
 				</div>
 		
 		{/each}
@@ -125,10 +129,31 @@
 		border: none;
 	}
 
+
+	input[type="text"] {
+		margin: 0px;
+		padding: 0px;
+		width: 100%;
+		height: 28px;
+		border: none;
+		text-align: center;
+		border-radius: 5px;
+	}
+	input[type="number"] {
+		margin: 0px;
+		padding: 0px;
+		width: 100%;
+		height: 28px;
+		border: none;
+		text-align: center;
+		border-radius: 5px;
+	}
+
 	.item {
 		display: grid;
-		grid-template-columns: 32px 36px auto;
+		grid-template-columns: auto 40px 90px auto;
 		user-select: none;
+		gap: 5px;
 		width: 100%;
 		min-height: 32px;
 		border-radius: 2px;
