@@ -85,20 +85,27 @@
 		list = list;
 		update(list);
 	}
+
+	function RemoveItem(i: number) {
+		list.splice(i, 1);
+		list = list;
+		update(list);
+	}
+
 </script>
 
 <div class="container component" on:dragover={moveItem} on:dragend={dropItem} on:touchmove={(e) => moveItem(e, true)} on:touchend={dropItem}>
 	<div class="list" bind:this={container}>
 		<div bind:this={marker} class="marker" />
 
-		{#each list as item}
+		{#each list as item,i}
 
 				<div class="item" draggable={true}  id={item.key} on:dragstart|self={pickItem} on:touchstart|self={(e) => pickItem(e, true)}>
 
 					<div class="text" title="Edit">{item}</div>
 					<input type="number" name="quantity" id="quantity" placeholder="QTT">
-					<input type="text" name="price" id="price" placeholder="Preço">
-					<button>DEL</button>
+					<input type="text" name="price" id="price" placeholder="Preço" value="">
+					<button on:click={() => RemoveItem(i)}>DEL</button>
 
 				</div>
 		

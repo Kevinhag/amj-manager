@@ -12,7 +12,7 @@
 				cars = data;
 				console.log(data);
 			});
-	});
+	});	
 
 	$: selectedCarData = cars.find((car) => car.id == selectedCar);
 
@@ -20,13 +20,13 @@
 		if (selectedCarData != null) {
 			// Alterar Carro
 			fetch(`http://localhost:3000/api/cars/${selectedCarData.id}`, {
-				method: 'PUT',
+				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
 				},
 				body: JSON.stringify(selectedCarData),
-			})
-				.then((response) => response.json())
+			}) // display response as plain text
+				.then((response) => response.text()) 
 				.then((data) => {
 					alert('Carro alterado com sucesso!');
 					console.log('Car updated:', data);

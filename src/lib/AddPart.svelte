@@ -13,76 +13,78 @@
 				console.log(data);
 			});
 	});
+
 	function addPart() {
 		const newPart = {
 			nome: name,
-			marca: brand
+			marca: brand,
 		};
 
 		fetch('http://localhost:3000/api/parts', {
 			method: 'POST',
 			headers: {
-				'Content-Type': 'application/json'
+				'Content-Type': 'application/json',
 			},
-			body: JSON.stringify(newPart)
+			body: JSON.stringify(newPart),
 		})
-		.then((response) => response.json())
-		.then((data) => {
-			console.log('Part added:', data);
-			// Reset selectedPartData and selectedPart
-			selectedPartData = null;
-			selectedPart = '';
-		})
-		.catch((error) => {
-			console.error('Error adding part:', error);
-		});
+			.then((response) => response.json())
+			.then((data) => {
+				console.log('Part added:', data);
+				parts = [...parts, data];
+				selectedPartData = null;
+				selectedPart = '';
+				alert('Peça adicionada com sucesso!');
+			})
+			.catch((error) => {
+				console.error('Error adding part:', error);
+			});
 	}
 
 	function updatePart() {
 		const updatedPart = {
 			id: selectedPartData.id,
 			nome: selectedPartData.nome,
-			marca: selectedPartData.marca
+			marca: selectedPartData.marca,
 		};
 
 		fetch(`http://localhost:3000/api/parts/${selectedPartData.id}`, {
 			method: 'PUT',
 			headers: {
-				'Content-Type': 'application/json'
+				'Content-Type': 'application/json',
 			},
-			body: JSON.stringify(updatedPart)
+			body: JSON.stringify(updatedPart),
 		})
-		.then((response) => response.json())
-		.then((data) => {
-			console.log('Part updated:', data);
-			// Reset selectedPartData and selectedPart
-			selectedPartData = null;
-			selectedPart = '';
-		})
-		.catch((error) => {
-			console.error('Error updating part:', error);
-		});
+			.then((response) => response.json())
+			.then((data) => {
+				parts = parts.map((part) => (part.id == selectedPartData.id ? updatedPart : part));
+				console.log('Part updated:', data);
+				selectedPartData = null;
+				selectedPart = '';
+				alert('Peça alterada com sucesso!');
+			})
+			.catch((error) => {
+				console.error('Error updating part:', error);
+			});
 	}
 
 	function deletePart() {
 		fetch(`http://localhost:3000/api/parts/${selectedPartData.id}`, {
-			method: 'DELETE'
+			method: 'DELETE',
 		})
-		.then((response) => {
-			console.log('Part deleted');
-			// Reset selectedPartData and selectedPart
-			selectedPartData = null;
-			selectedPart = '';
-		})
-		.catch((error) => {
-			console.error('Error deleting part:', error);
-		});
+			.then((response) => response.json())
+			.then((data) => {
+				console.log('Part deleted:', data);
+				parts = parts.filter((part) => part.id != selectedPartData.id);
+				selectedPartData = null;
+				selectedPart = '';
+				alert('Peça excluída com sucesso!');
+			})
+			.catch((error) => {
+				console.error('Error deleting part:', error);
+			});
 	}
 
 	$: selectedPartData = parts.find((part) => part.id == selectedPart);
-
-	// $: console.log('Selected Part:', selectedPart);
-	// $: console.log('Selected Part Data:', selectedPartData);
 </script>
 
 <section>
@@ -114,14 +116,19 @@
 			</div>
 			<div>
 				{#if selectedPartData != null}
-					<button type="submit">Alterar Peça</button>
+					<button type="submit" on:click={updatePart}>Alterar Peça</button>
 				{:else}
 					<button type="submit" on:click={addPart}>Adicionar Peça</button>
 				{/if}
 				{#if selectedPartData != null}
-				<button on:click={() => (selectedPartData = null)}>Nova Peça</button>
+					<button on:click={deletePart}>Excluir Peça</button>
 				{:else}
-				<button disabled>Nova Peça</button>
+					<button disabled>Excluir Peça</button>
+				{/if}
+				{#if selectedPartData != null}
+					<button on:click={() => (selectedPartData = null)}>Nova Peça</button>
+				{:else}
+					<button disabled>Nova Peça</button>
 				{/if}
 			</div>
 		</div>
@@ -146,7 +153,6 @@
 		width: 100%;
 		justify-content: center;
 		align-items: center;
-		
 
 		.title {
 			display: grid;
@@ -179,11 +185,6 @@
 				display: flex;
 				flex-direction: column;
 				justify-content: center;
-				// background-color: #44444433;
-				// width: 100%;
-				// height: 100%;
-				// gap: 10px;
-				// padding: 20px;
 				border: 1px solid $bgtestg;
 				border-radius: $radius;
 			}

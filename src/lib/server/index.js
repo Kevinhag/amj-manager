@@ -4,6 +4,7 @@ import cors from 'cors'; // Import cors module
 
 const app = express();
 app.use(cors());
+app.use(express.json());
 
 const db = new sqlite3.Database('./data.db', (err) => {
 	if (err) {
@@ -86,6 +87,35 @@ app.post('/api/parts', (req, res) => {
 				return res.status(500).json({ error: err.message });
 			}
 			return res.json({ id: this.lastID });
+		},
+	);
+});
+
+app.put('/api/parts/:id', (req, res) => {
+    const id = req.params.id;
+    const { nome, marca } = req.body;
+    db.run(
+        `UPDATE peca SET nome = ?, marca = ? WHERE id = ?`,
+        [nome, marca, id],
+        function (err) {
+            if (err) {
+                return res.status(500).json({ error: err.message });
+            }
+            return res.json({ id: id });
+        },
+    );
+});
+
+app.delete('/api/parts/:id', (req, res) => {
+	const id = req.params.id;
+	db.run(
+		`DELETE FROM peca WHERE id = ?`,
+		[id],
+		function (err) {
+			if (err) {
+				return res.status(500).json({ error: err.message });
+			}
+			return res.json({ id: id });
 		},
 	);
 });
