@@ -35,7 +35,7 @@
 
 <div class="main-selector">
 	<a href="/consult" class="selector-box consulta-cliente">Consultar Cliente</a>
-	<a href="/clients" class="selector-box add-client">Adicionar Cliente</a>
+	<a href="/os" class="selector-box add-client">Criar OS</a>
 	<option on:click={openPartsPopup} class="selector-box add-parts">Adicionar Peças</option>
 	<a href="/report" class="selector-box report">Relatórios</a>
 </div>

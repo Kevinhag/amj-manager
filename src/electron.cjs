@@ -5,6 +5,90 @@ const serve = require('electron-serve');
 const path = require('path');
 
 
+let server;
+const express = require('express');
+const sqlite3 = require('sqlite3');
+const cors = require('cors');
+
+// Cria uma instância do servidor Express
+const exServer = express();
+exServer.use(cors());
+exServer.use(express.json());
+
+const db = new sqlite3.Database('./data.db', (err) => {
+	if (err) {
+		console.error(err.message);
+	}
+	console.log('Connected to the database.');
+});
+
+function getAllClients() {
+	return new Promise((resolve, reject) => {
+		db.all('SELECT * FROM cliente', [], (err, rows) => {
+			if (err) {
+				reject(err);
+			} else {
+				resolve(rows);
+			}
+		});
+	});
+}
+
+function getAllCars() {
+	return new Promise((resolve, reject) => {
+		db.all('SELECT * FROM carro', [], (err, rows) => {
+			if (err) {
+				reject(err);
+			} else {
+				resolve(rows);
+			}
+		});
+	});
+}
+
+function getAllParts(sortby) {
+	return new Promise((resolve, reject) => {
+		const query = `SELECT * FROM peca ORDER BY ${sortby}`;
+		db.all(query, [], (err, rows) => {
+			if (err) {
+				reject(err);
+			} else {
+				resolve(rows);
+			}
+		});
+	});
+}
+
+
+exServer.get('/api/clients', async (req, res) => {
+	try {
+		const clients = await getAllClients();
+		res.json(clients);
+	} catch (err) {
+		res.status(500).json({ error: err.message });
+	}
+});
+
+exServer.get('/api/cars', async (req, res) => {
+	try {
+		const cars = await getAllCars();
+		res.json(cars);
+	} catch (err) {
+		res.status(500).json({ error: err.message });
+	}
+});
+
+exServer.get('/api/parts', async (req, res) => {
+	try {
+		const parts = await getAllParts('marca');
+		res.json(parts);
+	} catch (err) {
+		res.status(500).json({ error: err.message });
+	}
+});
+
+
+
 try {
 	require('electron-reloader')(module);
 } catch (e) {
@@ -94,6 +178,10 @@ app.on('activate', () => {
 		createMainWindow();
 	}
 });
+server = exServer.listen(3000, () => {
+	console.log('Express server is running on port 3000');
+});
+
 app.on('window-all-closed', () => {
 	if (process.platform !== 'darwin') app.quit();
 });
@@ -116,5 +204,8 @@ ipcMain.on('fetch-data', (event) => {
 
 app.on('will-quit', () => {
 	// Close express server
-	server.close();
+	if (server) {
+        server.close();
+        console.log('Express server is closed');
+    }
 });

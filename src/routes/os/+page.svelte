@@ -163,6 +163,8 @@
 						</option>
 					{/each}
 				</select>
+				
+
 				<div class="form-details">
 					
 					{#if selectedCarData}
@@ -186,6 +188,9 @@
 
 				</div>
 			</div>
+			
+		</div>
+		<div>
 			<div class="part-list">
 				<h2>Peças:</h2>
 				<input
@@ -224,7 +229,7 @@
 <style lang="scss">
 	section {
 		display: grid;
-		grid-template-columns: 1fr 1fr 1fr;
+		grid-template-columns: 1fr 1fr 1fr 1fr;
 		grid-template-rows: 1fr 1fr;
 		gap: 1rem;
 		width: 100%;
