@@ -65,5 +65,14 @@
 		"electron": {
 			"got": "^12.5.1"
 		}
+	},
+	"build": {
+		"appId": "com.seuapp.id",
+		"productName": "AMJ Manager",
+		"publish": {
+			"provider": "github",
+			"owner": "Kevinhag",
+			"repo": "amj-manager"
+		}
 	}
 }

@@ -1,9 +1,8 @@
 <script>
 	import { onMount } from 'svelte';
 	import Reorderable from '$lib/Reorderable.svelte';
-	// import html2canvas from 'html2canvas';
-	// import jsPDF from 'jspdf';
-
+	import html2canvas from 'html2canvas';
+	import jsPDF from 'jspdf';
 
 	let parts = [];
 	let cars = [];
@@ -25,37 +24,36 @@
 	let searchQuery = '';
 	let searchPartQuery = '';
 
-
 	function exportData() {
-				const data = {
-					selectedCarData,
-					selectedClientData,
-					addedParts,
-				};
+		const data = {
+			selectedCarData,
+			selectedClientData,
+			addedParts,
+		};
 
-				// Convert the data to a JSON string
-				const jsonData = JSON.stringify(data);
+		// Convert the data to a JSON string
+		const jsonData = JSON.stringify(data);
 
-				// Create a new anchor element
-				const anchor = document.createElement('a');
+		// Create a new anchor element
+		const anchor = document.createElement('a');
 
-				// Set the anchor's href attribute to a data URL containing the JSON data
-				anchor.href = `data:text/json;charset=utf-8,${encodeURIComponent(jsonData)}`;
+		// Set the anchor's href attribute to a data URL containing the JSON data
+		anchor.href = `data:text/json;charset=utf-8,${encodeURIComponent(jsonData)}`;
 
-				// Set the anchor's download attribute to specify the filename
-				anchor.download = 'data.json';
+		// Set the anchor's download attribute to specify the filename
+		anchor.download = 'data.json';
 
-				// Programmatically click the anchor to trigger the download
-				anchor.click();
+		// Programmatically click the anchor to trigger the download
+		anchor.click();
 
-				// Export the data to PDF
-				html2canvas(document.body).then((canvas) => {
-					const imgData = canvas.toDataURL('image/png');
-					const pdf = new jsPDF();
-					pdf.addImage(imgData, 'PNG', 0, 0);
-					pdf.save('data.pdf');
-				});
-			}
+		// Export the data to PDF
+		html2canvas(document.body).then((canvas) => {
+			const imgData = canvas.toDataURL('image/png');
+			const pdf = new jsPDF();
+			pdf.addImage(imgData, 'PNG', 0, 0);
+			pdf.save('data.pdf');
+		});
+	}
 
 	onMount(() => {
 		fetch('http://localhost:3000/api/cars')
@@ -110,12 +108,19 @@
 </script>
 
 <main>
-	<h1>{mainInfo}</h1>
+	<nav aria-label="breadcrumb">
+		<ol class="breadcrumb">
+			<li class="breadcrumb-item">
+				<a href="#">Clientes</a>
+				<a href="#">Carros</a>
+				<a href="#">Peças</a>
+			</li>
+		</ol>
+	</nav>
 	<section>
 		<div>
 			<div class="form-base">
 				<h2>Clientes:</h2>
-
 				<input
 					type="text"
 					id="search"
@@ -163,10 +168,7 @@
 						</option>
 					{/each}
 				</select>
-				
-
 				<div class="form-details">
-					
 					{#if selectedCarData}
 						Marca: {selectedCarData.marca}
 						<br />
@@ -176,7 +178,7 @@
 						<br />
 						Placa: {selectedCarData.placa}
 						<br />
-						{#if selectedCarData.obsretifica}
+						{#if selectedCarData.observacao}
 							<p>Observação: {selectedCarData.observacao}</p>
 						{/if}
 						{#if selectedCarData.obsretifica}
@@ -185,10 +187,8 @@
 					{:else}
 						<h3>Nenhum Carro Selecionado.</h3>
 					{/if}
-
 				</div>
 			</div>
-			
 		</div>
 		<div>
 			<div class="part-list">
@@ -199,7 +199,6 @@
 					placeholder="Pesquisar Peças:"
 					on:input={handlePartSearch}
 				/>
-
 				<select name="parts" id="parts" size="4" bind:value={selectedPart}>
 					{#each filteredParts as part (part.id)}
 						<option value={part.id}>
@@ -234,7 +233,6 @@
 		gap: 1rem;
 		width: 100%;
 		height: 100%;
-		// background-color: $colora;
 	}
 
 	.text {

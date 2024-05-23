@@ -181,6 +181,7 @@
 			display: grid;
 			grid-template-columns: 1fr 1fr;
 			width: 100%;
+			height: 80px;
 			gap: 20px;
 			> * {
 				display: flex;
@@ -199,6 +200,7 @@
 			gap: 20px;
 			align-items: end;
 			width: 100%;
+			height: 100%;
 			> * {
 				width: 100%;
 				height: 100%;
@@ -208,14 +210,11 @@
 				display: flex;
 				flex-direction: column;
 				justify-content: center;
-				// background-color: #44444433;
-				// width: 100%;
 				height: 100%;
-				// gap: 10px;
-				// padding: 20px;
-				border: 1px solid $bgtestg;
+				border: 1px solid #cccccc33;
 				border-radius: $radius;
 				select {
+					height: 100%;
 					font: 700 14px 'Roboto Mono', Arial, sans-serif;
 				}
 				#clients {
@@ -225,8 +224,8 @@
 			}
 			.client-add {
 				display: flex;
-				// flex-direction: row;
 				justify-content: center;
+				align-items: center;
 				background-color: #44444433;
 				flex-wrap: wrap;
 				width: 100%;
@@ -238,12 +237,11 @@
 
 				.form-person {
 					width: 40%;
-					// background-color: $bgtestg;
 					display: flex;
 					flex-direction: column;
 					gap: 5px;
 					label {
-						color: ghostwhite;
+						color: $maintextcolor;
 					}
 					input {
 						font: 700 14px 'Roboto Mono', Arial, sans-serif;

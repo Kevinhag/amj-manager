@@ -1,6 +1,4 @@
 <script>
-	import Counter from '$lib/Counter.svelte';
-	import Logo from '$lib/Logo.svelte';
 	import { browser } from '$app/environment';
 	import AddPart from '$lib/AddPart.svelte';
 
@@ -23,7 +21,6 @@
 	function closePartsPopup() {
 		showPartsPopup = false;
 	}
-
 </script>
 
 {#if showPartsPopup}
@@ -34,7 +31,7 @@
 {/if}
 
 <div class="main-selector">
-	<a href="/consult" class="selector-box consulta-cliente">Consultar Cliente</a>
+	<a href="/clients" class="selector-box consulta-cliente">Consultar Cliente</a>
 	<a href="/os" class="selector-box add-client">Criar OS</a>
 	<option on:click={openPartsPopup} class="selector-box add-parts">Adicionar Peças</option>
 	<a href="/report" class="selector-box report">Relatórios</a>
@@ -71,7 +68,6 @@
 		}
 	}
 
-
 	.report {
 		background-color: $color2a;
 		border: 1px solid $color2;
@@ -87,8 +83,8 @@
 			background-color: $color2;
 		}
 	}
-	
-	.parts-popup{
+
+	.parts-popup {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
@@ -96,10 +92,9 @@
 		padding: 20px;
 		border: 1px solid $color;
 		border-radius: 10px;
-		button{
+		button {
 			width: 200px;
 		}
-
 	}
 	.add-parts {
 		&::before {

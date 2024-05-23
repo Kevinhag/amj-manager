@@ -1,9 +1,9 @@
 const windowStateManager = require('electron-window-state');
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { autoUpdater } = require('electron-updater');
 const contextMenu = require('electron-context-menu');
 const serve = require('electron-serve');
 const path = require('path');
-
 
 let server;
 const express = require('express');
@@ -201,6 +201,42 @@ ipcMain.on('fetch-data', (event) => {
 		db.close();
 	});
 });
+
+autoUpdater.on('update-available', () => {
+	// mainWindow.webContents.send('update_available');
+	dialog.showMessageBox({
+		message: 'A new update is available. Do you want to download it now?',
+		buttons: ['Update', 'Cancel'],
+		defaultId: 0,
+	}, (buttonIndex) => {
+		if (buttonIndex === 0) {
+			autoUpdater.downloadUpdate();
+		}
+	});
+})
+
+autoUpdater.on('update-downloaded', () => {
+	// mainWindow.webContents.send('update_downloaded');
+	dialog.showMessageBox({
+		message: 'Update downloaded. It will be installed on restart. Restart now?',
+		buttons: ['Yes', 'No'],
+		defaultId: 0,
+	}, (buttonIndex) => {
+		if (buttonIndex === 0) {
+			autoUpdater.quitAndInstall();
+		}
+	});
+});
+
+autoUpdater.on('update-not-available', () => {
+	// mainWindow.webContents.send('update_not_available');
+	dialog.showMessageBox({
+		message: 'No updates available.',
+		buttons: ['OK'],
+		defaultId: 0,
+	});
+});
+
 
 app.on('will-quit', () => {
 	// Close express server

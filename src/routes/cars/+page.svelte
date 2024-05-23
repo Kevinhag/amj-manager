@@ -222,11 +222,7 @@
 				display: flex;
 				flex-direction: column;
 				justify-content: center;
-				// background-color: #44444433;
-				// width: 100%;
 				height: 100%;
-				// gap: 10px;
-				// padding: 20px;
 				border: 1px solid #cccccc33;
 				border-radius: $radius;
 				select {
@@ -236,8 +232,8 @@
 			}
 			.part-add {
 				display: flex;
-				// flex-direction: row;
 				justify-content: center;
+				align-items: center;
 				background-color: #44444433;
 				flex-wrap: wrap;
 				width: 100%;
