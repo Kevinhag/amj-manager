@@ -20,6 +20,7 @@
 
 <div class="clock">
 	<Clock />
+	<span id="getAppVersion">...</span>
 </div>
 
 <nav class="nav-main">

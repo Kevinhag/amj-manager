@@ -1,36 +1,21 @@
-<p align="center">
-  <img src="static/sveltekit-electron.svg" />
-</p>
+# Auto Mecanica Jorge Manager
 
-# Sveltekit + Electron
-
-Minimal [Sveltekit](https://github.com/sveltejs/kit#readme) + [Electron](https://www.electronjs.org/) starter template.
+Aplicação para gerenciamento de uma mecanica, guardando informações de clientes e peças usadas para cada trabalho. Gera Ordem de serviço de clientes exportando para PDF.
 
 <br />
 
-## Getting Started
+TODO: 
+melhorar UI das paginas
+consertar DB
+input de OS no db
+Botao de imprimir no pagina de OS
+pagina de Relatorios
+Pagina do cliente com acesso  aos carros e OS
 
-Unfortunately you must use `npm` as there are issues that arise when using `pnpm` or `yarn`
+Atualizacao funcionar
+arquivo DB no lugar certo
+encriptação
 
-|         |                                             |
-| ------- | ------------------------------------------- |
-| Clone   | · `npx degit fractalhq/sveltekit-electron ` |
-| Install | · `npm install`                             |
-| Develop | · `npm run dev`                             |
-| Build   | · `npm run build`                           |
+pagina de relatorio de acordo com data
+pagina de imprimir relatorio
 
-In order to eliminate vulnerabilities caused by electron itself, please run `npm update` and `npm audit fix`. This will apply overrides.
-
-<br />
-
-<p align="center">
-  <img src="screenshot.png" />
-</p>
-
-## Recommended IDE Setup
-
-[VSCode](https://code.visualstudio.com/) + [Svelte for VSCode](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode)
-
-## Change Build Targets
-
-In the scripts section of package.json you can update the `build:electron` command and change the flags to set the targets, by default it uses `-mwl` which is Mac, Windows, and Linux

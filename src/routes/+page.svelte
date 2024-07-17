@@ -1,6 +1,6 @@
 <script>
 	import { browser } from '$app/environment';
-	import AddPart from '$lib/AddPart.svelte';
+	import AddPart from '$lib/AddCar.svelte';
 
 	let desktop;
 	let showPartsPopup = false;

@@ -1,8 +1,7 @@
 <script lang="ts">
-	export let list: Array<any> = [];
+	export let list: Array<{ key: string; nome: string; quantidade: number; preco: number }> = [];
 	export let update = (v: any) => {};
 
-	// reorderable
 	let container: HTMLElement;
 	let picked: any;
 	let marker: HTMLElement;
@@ -25,7 +24,6 @@
 	}
 
 	async function pickItem(e: any, touch = false) {
-		// Required for some browsers to allow dragging
 		e.dataTransfer.setData("text/plain", "");
 		picked = e.target;
 
@@ -45,7 +43,6 @@
 	}
 
 	function dropItem() {
-
 		if (picked && !picked.classList.contains("locked") && target) {
 			reorderItems();
 		}
@@ -55,13 +52,11 @@
 		marker.style.visibility = "hidden";
 	}
 
-	// reorders item based on DOM ids
 	function reorderItems() {
 		if (!container || !picked) {
 			return;
 		}
 
-		// const elements = Array.from(container.querySelectorAll('.item'))
 		let picked_index = list.findIndex((e) => e.key === picked.id);
 		let marker_index = list.findIndex((e) => e.key === target.id);
 
@@ -92,24 +87,49 @@
 		update(list);
 	}
 
+	function updateQuantity(i: number, quantity: number) {
+		list[i].quantidade = isNaN(quantity) ? 0 : quantity;
+		update(list);
+	}
+
+	function updatePrice(i: number, price: string) {
+		const numericValue = parseFloat(price.replace(/[^\d]/g, '')) / 100;
+		list[i].preco = isNaN(numericValue) ? 0 : numericValue;
+		update(list);
+	}
+
+	function getTotal(item: { quantidade: number; preco: number }) {
+		return item.quantidade * item.preco;
+	}
+
+	function currencyFormat(currency: number) {
+		return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(currency);
+	}
+
 </script>
 
 <div class="container component" on:dragover={moveItem} on:dragend={dropItem} on:touchmove={(e) => moveItem(e, true)} on:touchend={dropItem}>
 	<div class="list" bind:this={container}>
 		<div bind:this={marker} class="marker" />
 
-		{#each list as item,i}
-
-				<div class="item" draggable={true}  id={item.key} on:dragstart|self={pickItem} on:touchstart|self={(e) => pickItem(e, true)}>
-
-					<div class="text" title="Edit">{item}</div>
-					<input type="number" name="quantity" id="quantity" placeholder="QTT">
-					<input type="text" name="price" id="price" placeholder="Preço" value="">
-					<button on:click={() => RemoveItem(i)}>DEL</button>
-
-				</div>
-		
+		{#each list as item, i}
+			<div class="item" draggable={true} id={item.key} on:dragstart|self={pickItem} on:touchstart|self={(e) => pickItem(e, true)}>
+				<div class="text" title="Edit">{item.nome}</div>
+				<input type="number" name="quantity" id="quantity" min="1" value={item.quantidade} on:input={(e) => updateQuantity(i, +e.target.value)} />
+				<input type="text" name="price" id="price" min="0" step="10" value={currencyFormat(item.preco)} on:input={(e) => updatePrice(i, e.target.value)} />
+				<input type="text" name="totalprice" id="totalprice" readonly value={currencyFormat(getTotal(item))} />
+				<button on:click={() => RemoveItem(i)}>DEL</button>
+			</div>
 		{/each}
+		<div>
+			<div class="item locked">
+				<div class="text">Total</div>
+				<div></div>
+				<div></div>
+				<div></div>
+				<div class="text">{currencyFormat(list.reduce((acc, item) => acc + getTotal(item), 0))}</div>
+			</div>
+		</div>
 	</div>
 </div>
 
@@ -128,25 +148,7 @@
 		padding: 2px;
 	}
 
-	input[type="checkbox"] {
-		margin: 0px;
-		padding: 0px;
-		width: 16px;
-		height: 16px;
-		border: none;
-	}
-
-
-	input[type="text"] {
-		margin: 0px;
-		padding: 0px;
-		width: 100%;
-		height: 28px;
-		border: none;
-		text-align: center;
-		border-radius: 5px;
-	}
-	input[type="number"] {
+	input[type="text"], input[type="number"] {
 		margin: 0px;
 		padding: 0px;
 		width: 100%;
@@ -158,7 +160,8 @@
 
 	.item {
 		display: grid;
-		grid-template-columns: auto 40px 90px auto;
+		grid-template-columns: auto 40px 90px 60px auto;
+
 		user-select: none;
 		gap: 5px;
 		width: 100%;
@@ -203,12 +206,6 @@
 	.handle {
 		color: gray;
 		opacity: 0.333;
-	}
-
-	.handle :global(svg) {
-		width: 100%;
-		height: 16px;
-		translate: 2px 0px;
 	}
 
 	.marker {

@@ -6,6 +6,15 @@
 	"main": "src/electron.cjs",
 	"type": "module",
 	"author": "Kevin Henriques",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/Kevinhag/amj-manager"
+	},
+	"publish": {
+		"provider": "github",
+		"owner": "Kevinhag",
+		"repo": "amj-manager"
+	},
 	"scripts": {
 		"dev": "cross-env NODE_ENV=dev npm run dev:all",
 		"dev:all": "concurrently -n=svelte,electron -c='#ff3e00',blue \"npm run dev:svelte\" \"npm run dev:electron\" ",
@@ -30,6 +39,9 @@
 		"electron-serve": "^1.1.0",
 		"electron-window-state": "^5.0.3",
 		"express": "^4.18.2",
+		"html2canvas": "^1.4.1",
+		"html2pdf.js": "^0.10.2",
+		"jspdf": "^2.5.1",
 		"nodemon": "^3.0.3",
 		"sqlite3": "^5.1.7"
 	},
@@ -67,7 +79,7 @@
 		}
 	},
 	"build": {
-		"appId": "com.seuapp.id",
+		"appId": "com.amjmanager.updater",
 		"productName": "AMJ Manager",
 		"publish": {
 			"provider": "github",
