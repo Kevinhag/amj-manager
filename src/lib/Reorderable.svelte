@@ -113,7 +113,7 @@
 		<div bind:this={marker} class="marker" />
 
 		{#each list as item, i}
-			<div class="item" draggable={true} id={item.key} on:dragstart|self={pickItem} on:touchstart|self={(e) => pickItem(e, true)}>
+			<div class="item" draggable={false} id={item.key} on:dragstart|self={pickItem} on:touchstart|self={(e) => pickItem(e, true)}>
 				<div class="text" title="Edit">{item.nome}</div>
 				<input type="number" name="quantity" id="quantity" min="1" value={item.quantidade} on:input={(e) => updateQuantity(i, +e.target.value)} />
 				<input type="text" name="price" id="price" min="0" step="10" value={currencyFormat(item.preco)} on:input={(e) => updatePrice(i, e.target.value)} />

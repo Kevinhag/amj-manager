@@ -60,7 +60,6 @@ CREATE TABLE IF NOT EXISTS troca_peca (
     ordem_servico_id INTEGER REFERENCES ordem_servico(id) ON DELETE CASCADE,
     nome_peca TEXT NOT NULL,
     marca_peca TEXT NOT NULL,
-    observacao TEXT,
     quantidade INTEGER NOT NULL,
     preco_unitario DECIMAL(10, 2) NOT NULL
 );

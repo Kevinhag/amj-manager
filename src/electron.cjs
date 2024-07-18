@@ -4,8 +4,8 @@ const { autoUpdater } = require('electron-updater');
 const contextMenu = require('electron-context-menu');
 const serve = require('electron-serve');
 const path = require('path');
+const fs = require('fs');
 
-let server;
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const cors = require('cors');
@@ -25,53 +25,72 @@ const db = new sqlite3.Database('./data.db', (err) => {
 	console.log('Connected to the database.');
 });
 
+// Função para verificar se a tabela existe e criar se necessário
+function createTables() {
+	db.serialize(() => {
+		db.run(`
+            CREATE TABLE IF NOT EXISTS cliente (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				nome TEXT NOT NULL,
+				cpf TEXT UNIQUE,
+				endereco TEXT,
+				bairro TEXT,
+				cidade TEXT,
+				numero_casa TEXT,
+				complemento TEXT,
+				tel TEXT,
+				tel2 TEXT
+            )
+        `);
 
-// Habilita a criptografia no banco de dados
-// db.serialize(() => {
-// 	db.run("PRAGMA key" = "");
-// 	db.run("PRAGMA cipher_compatibility = 4");
-// })
+		db.run(`
+            CREATE TABLE IF NOT EXISTS carro (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				cliente_id INTEGER REFERENCES cliente(id) ON DELETE CASCADE,
+				placa TEXT UNIQUE,
+				marca TEXT,
+				modelo TEXT,
+				ano INTEGER,
+				km INTEGER,
+				potencia INTEGER,
+				observacao TEXT,
+				obsretifica TEXT
+            )
+        `);
 
-// sqlite3.verbose();
-// const sqlite3WithSEE = sqlite3.verbose();
+		db.run(`
+            CREATE TABLE IF NOT EXISTS peca (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nome TEXT,
+                marca TEXT
+            )
+        `);
 
+		db.run(`
+            CREATE TABLE IF NOT EXISTS ordem_servico (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				carro_id INTEGER REFERENCES carro(id) ON DELETE CASCADE,
+				observacao TEXT,
+				data DATE NOT NULL,
+				valor_total DECIMAL(10, 2) NOT NULL
+            )
+        `);
 
-function inserirOrdemServico(carroId, observacao, data, valorTotal, itens, callback) {
-    db.serialize(() => {
-        db.run('BEGIN TRANSACTION');
-        
-        db.run(`INSERT INTO ordem_servico (carro_id, observacao, data, valor_total) 
-                VALUES (?, ?, ?, ?)`,
-                [carroId, observacao, data, valorTotal],
-                function (err) {
-                    if (err) {
-                        db.run('ROLLBACK');
-                        return callback(err);
-                    }
-                    const ordemServicoId = this.lastID;
-                    
-                    const stmt = db.prepare(`INSERT INTO troca_peca (ordem_servico_id, peca_id, observacao, quantidade, preco_unitario) 
-                                             VALUES (?, ?, ?, ?, ?)`);
-                    for (let item of itens) {
-                        stmt.run([ordemServicoId, item.pecaId, item.observacao, item.quantidade, item.precoUnitario]);
-                    }
-                    stmt.finalize();
-                    
-                    db.run('COMMIT', callback);
-                });
-    });
+		db.run(`
+            CREATE TABLE IF NOT EXISTS troca_peca (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+				ordem_servico_id INTEGER REFERENCES ordem_servico(id) ON DELETE CASCADE,
+                nome_peca TEXT NOT NULL,
+                marca_peca TEXT NOT NULL,
+                quantidade INTEGER NOT NULL,
+                preco_unitario DECIMAL(10, 2) NOT NULL
+            )
+        `);
+	});
 }
 
-function inserirTrocaPeca(ordemServicoId, pecaId, observacao, quantidade, precoUnitario, callback) {
-    db.run(`INSERT INTO troca_peca (ordem_servico_id, peca_id, observacao, quantidade, preco_unitario) 
-            VALUES (?, ?, ?, ?, ?)`,
-            [ordemServicoId, pecaId, observacao, quantidade, precoUnitario],
-            function (err) {
-                if (err) {
-                    return callback(err);
-                }
-                callback(null, this.lastID); // Retorna o ID da nova troca de peça inserida
-            });
+if (!fs.existsSync('./data.db')) {
+	createTables();
 }
 
 
@@ -86,44 +105,6 @@ function getAllClients() {
 		});
 	});
 }
-
-function getClientId() {
-	return new Promise((resolve, reject) => {
-		db.all('SELECT * FROM cliente WHERE id = ?', [id], (err, rows) => {
-			if (err) {
-				reject(err);
-			} else {
-				resolve(rows);
-			}
-		});
-	});
-}
-
-function getClientName() {
-	return new Promise((resolve, reject) => {
-		db.all('SELECT * FROM cliente WHERE nome = ?', [nome], (err, rows) => {
-			if (err) {
-				reject(err);
-			} else {
-				resolve(rows);
-			}
-		});
-	});
-}
-
-function getClientCPF() {
-	return new Promise((resolve, reject) => {
-		db.all('SELECT * FROM cliente WHERE cpf = ?', [cpf], (err, rows) => {
-			if (err) {
-				reject(err);
-			} else {
-				resolve(rows);
-			}
-		});
-	});
-}
-
-
 
 function getAllCars() {
 	return new Promise((resolve, reject) => {
@@ -177,13 +158,10 @@ exServer.get('/api/parts', async (req, res) => {
 	}
 });
 
-
-// Rota para salvar uma nova Ordem de Serviço
 exServer.post('/api/save-os', async (req, res) => {
     try {
         const { carroId, observacao, data, valorTotal, itens } = req.body;
 
-        // Inserir a Ordem de Serviço no banco de dados
         const insertOsQuery = `INSERT INTO ordem_servico (carro_id, observacao, data, valor_total) VALUES (?, ?, ?, ?)`;
         const osParams = [carroId, observacao, data, valorTotal];
 
@@ -193,7 +171,6 @@ exServer.post('/api/save-os', async (req, res) => {
             }
             const ordemServicoId = this.lastID;
 
-            // Inserir os itens da Ordem de Serviço
             const insertItemQuery = `INSERT INTO troca_peca (ordem_servico_id, nome_peca, marca_peca, quantidade, preco_unitario) VALUES (?, ?, ?, ?, ?)`;
 
             itens.forEach(item => {
@@ -210,9 +187,6 @@ exServer.post('/api/save-os', async (req, res) => {
         res.status(500).send({ error: error.message });
     }
 });
-
-
-
 
 try {
 	require('electron-reloader')(module);
@@ -231,7 +205,7 @@ function createWindow() {
 		defaultHeight: 720,
 	});
 
-	const mainWindow = new BrowserWindow({
+	mainWindow = new BrowserWindow({
 		minHeight: 720,
 		minWidth: 1280,
 		webPreferences: {
@@ -268,7 +242,10 @@ contextMenu({
 	showCopyImage: false,
 	prepend: (defaultActions, params, browserWindow) => [
 		{
-			label: 'Make App 💻',
+			label: 'Save as PDF',
+			click: () => {
+				mainWindow.webContents.send('save-pdf');
+			}
 		},
 	],
 });
@@ -308,6 +285,44 @@ function createMainWindow() {
 	ipcMain.handle('getAppVersion', () => {
 		return app.getVersion();
 	});
+
+	ipcMain.on('print-to-pdf', async (event, content) => {
+		const { canceled, filePath } = await dialog.showSaveDialog(mainWindow, {
+			title: 'Save PDF',
+			defaultPath: 'OrdemDeServico.pdf',
+			filters: [{ name: 'PDF Files', extensions: ['pdf'] }]
+		});
+
+		if (canceled || !filePath) {
+			return;
+		}
+
+		const options = {
+			marginsType: 0,
+			pageSize: 'A4',
+			printBackground: true,
+			printSelectionOnly: false,
+			landscape: false,
+		};
+
+		try {
+			const win = new BrowserWindow({ show: false });
+			await win.loadURL(`data:text/html;charset=UTF-8,${encodeURIComponent(content)}`);
+			const pdfData = await win.webContents.printToPDF(options);
+			fs.writeFileSync(filePath, pdfData);
+			win.close();
+			event.reply('pdf-generated', filePath);
+			dialog.showMessageBox({
+				type: 'info',
+				title: 'PDF Generated',
+				message: `PDF has been saved to ${filePath}`,
+				buttons: ['OK']
+			});
+		} catch (error) {
+			console.error('Error generating PDF:', error);
+			event.reply('pdf-error', error.message);
+		}
+	});
 }
 
 app.once('ready', createMainWindow);
@@ -337,7 +352,6 @@ ipcMain.on('fetch-data', (event) => {
 		} else {
 			event.reply('fetch-data-success', rows);
 		}
-		db.close();
 	});
 });
 
