@@ -1,15 +1,23 @@
 {
-	"appId": "com.example.app",
-	"productName": "Sveltekit Electron",
+	"appId": "com.amjmanager.updater",
+	"productName": "AMJ Manager",
 	"directories": {
-		"output": "dist"
+	  "output": "dist"
 	},
 	"files": [
-		"src/electron.cjs",
-		"src/preload.cjs",
-		{
-			"from": "build",
-			"to": ""
-		}
+	  "src/electron.cjs",
+	  "src/preload.cjs",
+	  {
+		"from": "build",
+		"to": ""
+	  }
+	],
+	"publish": [
+	  {
+		"provider": "github",
+		"owner": "Kevinhag",
+		"repo": "amj-manager"
+	  }
 	]
-}
+  }
+  

@@ -1,19 +1,14 @@
 {
-	"name": "sveltekit-electron",
+	"name": "amj-manager",
 	"version": "0.0.1",
 	"private": true,
-	"description": "Minimal Sveltekit + Electron starter template.",
+	"description": "AMJ Electron App.",
 	"main": "src/electron.cjs",
 	"type": "module",
 	"author": "Kevin Henriques",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/Kevinhag/amj-manager"
-	},
-	"publish": {
-		"provider": "github",
-		"owner": "Kevinhag",
-		"repo": "amj-manager"
 	},
 	"scripts": {
 		"dev": "cross-env NODE_ENV=dev npm run dev:all",
@@ -23,7 +18,7 @@
 		"dev:server": "nodemon ./src/lib/server/index.js",
 		"build": "cross-env NODE_ENV=production npm run build:svelte && npm run build:electron",
 		"build:svelte": "vite build",
-		"build:electron": "electron-builder --win --config build.config.json"
+		"build:electron": "electron-builder --win --publish always --config build.config.json"
 	},
 	"engines": {
 		"npm": ">=7",
@@ -33,18 +28,20 @@
 		"Chrome 89"
 	],
 	"dependencies": {
+		"sqlite3": "^5.1.7",
 		"cors": "^2.8.5",
 		"electron-context-menu": "^3.6.1",
 		"electron-reloader": "^1.2.3",
 		"electron-serve": "^1.1.0",
 		"electron-window-state": "^5.0.3",
+		"electron-updater": "^6.3.0",
 		"express": "^4.18.2",
 		"html2canvas": "^1.4.1",
 		"html2pdf.js": "^0.10.2",
 		"jspdf": "^2.5.1",
-		"nodemon": "^3.0.3",
-		"sqlite3": "^5.1.7"
+		"nodemon": "^3.0.3"
 	},
+	
 	"devDependencies": {
 		"@electron/rebuild": "^3.6.0",
 		"@sveltejs/adapter-static": "2.0.1",
@@ -81,10 +78,12 @@
 	"build": {
 		"appId": "com.amjmanager.updater",
 		"productName": "AMJ Manager",
-		"publish": {
-			"provider": "github",
-			"owner": "Kevinhag",
-			"repo": "amj-manager"
-		}
+		"publish": [
+			{
+				"provider": "github",
+				"owner": "Kevinhag",
+				"repo": "amj-manager"
+			}
+		]
 	}
 }
