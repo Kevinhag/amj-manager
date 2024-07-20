@@ -6,10 +6,20 @@ const serve = require('electron-serve');
 const path = require('path');
 const fs = require('fs');
 const express = require('express');
-const sqlite3 = require('sqlite3').verbose();
+const Database = require('better-sqlite3');
 const cors = require('cors');
 
-const dbPath = "./data.db";
+// Obtenha o diretório de dados do usuário do Electron
+const userDataPath = app.getPath('userData');
+
+// Defina a pasta onde o arquivo .db será criado
+const dbFolderPath = path.join(userDataPath, 'userdb');
+const dbPath = path.join("./", 'data.db');
+
+// Certifique-se de que a pasta existe
+if (!fs.existsSync(dbFolderPath)) {
+  fs.mkdirSync(dbFolderPath, { recursive: true });
+}
 
 autoUpdater.autoDownload = false;
 autoUpdater.autoInstallOnAppQuit = true;
@@ -19,17 +29,11 @@ const exServer = express();
 exServer.use(cors());
 exServer.use(express.json());
 
-const db = new sqlite3.Database(dbPath, (err) => {
-  if (err) {
-    console.error(err.message);
-  }
-  console.log('Connected to the database.');
-});
+const db = new Database(dbPath);
 
 // Função para verificar se a tabela existe e criar se necessário
 function createTables() {
-  db.serialize(() => {
-    db.run(`
+    db.exec(`
       CREATE TABLE IF NOT EXISTS cliente (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         nome TEXT NOT NULL,
@@ -41,10 +45,7 @@ function createTables() {
         complemento TEXT,
         tel TEXT,
         tel2 TEXT
-      )
-    `);
-
-    db.run(`
+      );
       CREATE TABLE IF NOT EXISTS carro (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         cliente_id INTEGER REFERENCES cliente(id) ON DELETE CASCADE,
@@ -56,28 +57,19 @@ function createTables() {
         potencia INTEGER,
         observacao TEXT,
         obsretifica TEXT
-      )
-    `);
-
-    db.run(`
+      );
       CREATE TABLE IF NOT EXISTS peca (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         nome TEXT,
         marca TEXT
-      )
-    `);
-
-    db.run(`
+      );
       CREATE TABLE IF NOT EXISTS ordem_servico (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         carro_id INTEGER REFERENCES carro(id) ON DELETE CASCADE,
         observacao TEXT,
         data DATE NOT NULL,
         valor_total DECIMAL(10, 2) NOT NULL
-      )
-    `);
-
-    db.run(`
+      );
       CREATE TABLE IF NOT EXISTS troca_peca (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         ordem_servico_id INTEGER REFERENCES ordem_servico(id) ON DELETE CASCADE,
@@ -85,51 +77,58 @@ function createTables() {
         marca_peca TEXT NOT NULL,
         quantidade INTEGER NOT NULL,
         preco_unitario DECIMAL(10, 2) NOT NULL
-      )
+      );
     `);
-  });
+    console.log('Tables created successfully');
 }
 
-if (!fs.existsSync(dbPath)) {
-  createTables();
-}
+createTables();
 
 function getAllClients() {
   return new Promise((resolve, reject) => {
-    db.all('SELECT * FROM cliente', [], (err, rows) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(rows);
-      }
-    });
+    try {
+      const rows = db.prepare('SELECT * FROM cliente').all();
+      resolve(rows);
+    } catch (err) {
+      reject(err);
+    }
   });
 }
 
 function getAllCars() {
   return new Promise((resolve, reject) => {
-    db.all('SELECT * FROM carro', [], (err, rows) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(rows);
-      }
-    });
+    try {
+      const rows = db.prepare('SELECT * FROM carro').all();
+      resolve(rows);
+    } catch (err) {
+      reject(err);
+    }
   });
 }
 
 function getAllParts(sortby) {
   return new Promise((resolve, reject) => {
-    const query = `SELECT * FROM peca ORDER BY ${sortby}`;
-    db.all(query, [], (err, rows) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(rows);
-      }
-    });
+    try {
+      const query = `SELECT * FROM peca ORDER BY ${sortby}`;
+      const rows = db.prepare(query).all();
+      resolve(rows);
+    } catch (err) {
+      reject(err);
+    }
   });
 }
+
+exServer.post('/api/insert-part', async (req, res) => {
+  try {
+    const { nome, marca } = req.body;
+    const insertPartQuery = `INSERT INTO peca (nome, marca) VALUES (?, ?)`;
+    const stmt = db.prepare(insertPartQuery);
+    const info = stmt.run(nome, marca);
+    res.send({ message: 'Peça inserida com sucesso!', partId: info.lastInsertRowid });
+  } catch (error) {
+    res.status(500).send({ error: error.message });
+  }
+});
 
 exServer.get('/api/clients', async (req, res) => {
   try {
@@ -165,24 +164,22 @@ exServer.post('/api/save-os', async (req, res) => {
     const insertOsQuery = `INSERT INTO ordem_servico (carro_id, observacao, data, valor_total) VALUES (?, ?, ?, ?)`;
     const osParams = [carroId, observacao, data, valorTotal];
 
-    db.run(insertOsQuery, osParams, function(err) {
-      if (err) {
-        return res.status(500).send({ error: err.message });
+    const stmt = db.prepare(insertOsQuery);
+    const info = stmt.run(...osParams);
+    const ordemServicoId = info.lastInsertRowid;
+
+    const insertItemQuery = `INSERT INTO troca_peca (ordem_servico_id, nome_peca, marca_peca, quantidade, preco_unitario) VALUES (?, ?, ?, ?, ?)`;
+
+    const itemStmt = db.prepare(insertItemQuery);
+    const insertMany = db.transaction((itens) => {
+      for (const item of itens) {
+        itemStmt.run(ordemServicoId, item.nome, item.marca, item.quantidade, item.preco);
       }
-      const ordemServicoId = this.lastID;
-
-      const insertItemQuery = `INSERT INTO troca_peca (ordem_servico_id, nome_peca, marca_peca, quantidade, preco_unitario) VALUES (?, ?, ?, ?, ?)`;
-
-      itens.forEach(item => {
-        db.run(insertItemQuery, [ordemServicoId, item.nome, item.marca, item.quantidade, item.preco], err => {
-          if (err) {
-            console.error('Erro ao inserir item na OS:', err.message);
-          }
-        });
-      });
-
-      res.send({ message: 'Ordem de Serviço salva com sucesso!', ordemServicoId });
     });
+
+    insertMany(itens);
+
+    res.send({ message: 'Ordem de Serviço salva com sucesso!', ordemServicoId });
   } catch (error) {
     res.status(500).send({ error: error.message });
   }
@@ -345,14 +342,13 @@ ipcMain.on('to-main', (event, count) => {
 });
 
 ipcMain.on('fetch-data', (event) => {
-  db.all('SELECT * FROM Artist', (err, rows) => {
-    if (err) {
-      console.error(err.message);
-      event.reply('fetch-data-error', err.message);
-    } else {
-      event.reply('fetch-data-success', rows);
-    }
-  });
+  try {
+    const rows = db.prepare('SELECT * FROM Artist').all();
+    event.reply('fetch-data-success', rows);
+  } catch (err) {
+    console.error(err.message);
+    event.reply('fetch-data-error', err.message);
+  }
 });
 
 autoUpdater.on('update-available', () => {

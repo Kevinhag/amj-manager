@@ -4,6 +4,8 @@
 	let parts = [];
 	let selectedPart = '';
 	let selectedPartData = '';
+	let name = '';
+	let brand = '';
 
 	onMount(() => {
 		fetch('http://localhost:3000/api/parts')
@@ -20,7 +22,7 @@
 			marca: brand,
 		};
 
-		fetch('http://localhost:3000/api/parts', {
+		fetch('http://localhost:3000/api/insert-part', {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
@@ -103,7 +105,7 @@
 				{#if selectedPartData != null}
 					<input type="text" id="name" bind:value={selectedPartData.nome} />
 				{:else}
-					<input type="text" id="name" />
+					<input type="text" id="name" bind:value={name} />
 				{/if}
 			</div>
 			<div class="form-part">
@@ -111,7 +113,7 @@
 				{#if selectedPartData != null}
 					<input type="text" id="brand" bind:value={selectedPartData.marca} />
 				{:else}
-					<input type="text" id="brand" />
+					<input type="text" id="brand" bind:value={brand} />
 				{/if}
 			</div>
 			<div>

@@ -18,7 +18,8 @@
 		"dev:server": "nodemon ./src/lib/server/index.js",
 		"build": "cross-env NODE_ENV=production npm run build:svelte && npm run build:electron",
 		"build:svelte": "vite build",
-		"build:electron": "electron-builder --win --publish always --config build.config.json"
+		"build:electron": "electron-builder --win --publish always --config build.config.json",
+		"postinstall": "electron-builder install-app-deps"
 	},
 	"engines": {
 		"npm": ">=7",
@@ -28,20 +29,19 @@
 		"Chrome 89"
 	],
 	"dependencies": {
-		"sqlite3": "^5.1.7",
+		"better-sqlite3": "^11.1.2",
 		"cors": "^2.8.5",
 		"electron-context-menu": "^3.6.1",
 		"electron-reloader": "^1.2.3",
 		"electron-serve": "^1.1.0",
-		"electron-window-state": "^5.0.3",
 		"electron-updater": "^6.3.0",
+		"electron-window-state": "^5.0.3",
 		"express": "^4.18.2",
 		"html2canvas": "^1.4.1",
 		"html2pdf.js": "^0.10.2",
 		"jspdf": "^2.5.1",
 		"nodemon": "^3.0.3"
 	},
-	
 	"devDependencies": {
 		"@electron/rebuild": "^3.6.0",
 		"@sveltejs/adapter-static": "2.0.1",
@@ -55,7 +55,6 @@
 		"electron-builder": "^24.9.1",
 		"electron-connect": "^0.6.1",
 		"electron-packager": "^17.1.1",
-		"electron-updater": "^6.3.0",
 		"eslint": "^8.36.0",
 		"eslint-config-prettier": "^8.8.0",
 		"eslint-plugin-svelte3": "^4.0.0",

@@ -12,6 +12,7 @@
 		"to": ""
 	  }
 	],
+	
 	"publish": [
 	  {
 		"provider": "github",
