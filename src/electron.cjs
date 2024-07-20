@@ -126,6 +126,45 @@ exServer.post('/api/insert-part', async (req, res) => {
     const info = stmt.run(nome, marca);
     res.send({ message: 'Peça inserida com sucesso!', partId: info.lastInsertRowid });
   } catch (error) {
+    console.error("Erro ao inserir peça:", error.message);
+    res.status(500).send({ error: error.message });
+  }
+});
+
+exServer.put('/api/update-parts', async (req, res) => {
+  try {
+    const { id, nome, marca } = req.body;
+    console.log("Dados recebidos para atualização:", { id, nome, marca });
+    
+    const updatePartQuery = `UPDATE peca SET nome = ?, marca = ? WHERE id = ?`;
+    const stmt = db.prepare(updatePartQuery);
+    const info = stmt.run(nome, marca, id);
+    
+    if (info.changes === 0) {
+      throw new Error('Nenhuma peça encontrada com o ID fornecido.');
+    }
+
+    res.send({ message: 'Peça atualizada com sucesso!' });
+  } catch (error) {
+    console.error("Erro ao atualizar peça:", error.message);
+    res.status(500).send({ error: error.message });
+  }
+});
+
+exServer.delete('/api/delete-part/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deletePartQuery = `DELETE FROM peca WHERE id = ?`;
+    const stmt = db.prepare(deletePartQuery);
+    const info = stmt.run(id);
+
+    if (info.changes === 0) {
+      throw new Error('Nenhuma peça encontrada com o ID fornecido.');
+    }
+
+    res.send({ message: 'Peça deletada com sucesso!' });
+  } catch (error) {
+    console.error("Erro ao deletar peça:", error.message);
     res.status(500).send({ error: error.message });
   }
 });

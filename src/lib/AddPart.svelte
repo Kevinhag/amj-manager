@@ -49,7 +49,7 @@
 			marca: selectedPartData.marca,
 		};
 
-		fetch(`http://localhost:3000/api/parts/${selectedPartData.id}`, {
+		fetch('http://localhost:3000/api/update-parts', {
 			method: 'PUT',
 			headers: {
 				'Content-Type': 'application/json',
@@ -68,18 +68,18 @@
 				console.error('Error updating part:', error);
 			});
 	}
-
-	function deletePart() {
-		fetch(`http://localhost:3000/api/parts/${selectedPartData.id}`, {
+	function deletePart(selectedPartData) {
+		fetch(`http://localhost:3000/api/delete-part/${selectedPartData.id}`, {
 			method: 'DELETE',
+			headers: {
+				'Content-Type': 'application/json',
+			},
 		})
 			.then((response) => response.json())
 			.then((data) => {
+				parts = parts.filter((part) => part.id !== selectedPartData.id);
 				console.log('Part deleted:', data);
-				parts = parts.filter((part) => part.id != selectedPartData.id);
-				selectedPartData = null;
-				selectedPart = '';
-				alert('Peça excluída com sucesso!');
+				alert('Peça deletada com sucesso!');
 			})
 			.catch((error) => {
 				console.error('Error deleting part:', error);
