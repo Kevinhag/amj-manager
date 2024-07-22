@@ -441,11 +441,11 @@ function createMainWindow() {
       dialog.showMessageBox({
         type: 'info',
         title: 'PDF Generated',
-        message: `PDF has been saved to ${filePath}`,
+        message: `PDF Foi salvo em ${filePath}`,
         buttons: ['OK']
       });
     } catch (error) {
-      console.error('Error generating PDF:', error);
+      console.error('Erro Gerando PDF:', error);
       event.reply('pdf-error', error.message);
     }
   });
@@ -506,9 +506,9 @@ autoUpdater.on('update-downloaded', () => {
   dialog
     .showMessageBox({
       type: 'info',
-      title: 'Update Ready',
-      message: 'Update downloaded. It will be installed on restart. Restart now?',
-      buttons: ['Yes', 'Later']
+      title: 'Atualização Pronta',
+      message: 'Atualização baixada. Será instalado quando reiniciar o programa. Reiniciar agora?',
+      buttons: ['Sim', 'Não']
     })
     .then((result) => {
       if (result.response === 0) {
@@ -520,8 +520,8 @@ autoUpdater.on('update-downloaded', () => {
 autoUpdater.on('update-not-available', () => {
   dialog.showMessageBox({
     type: 'info',
-    title: 'No Updates',
-    message: 'No updates available.',
+    title: 'Sem Atualizações',
+    message: 'Nenhuma atualização disponível.',
     buttons: ['OK'],
   });
 });
