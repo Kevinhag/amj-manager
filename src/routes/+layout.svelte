@@ -1,12 +1,17 @@
 <script>
 	import Clock from '../lib/Clock.svelte';
 	import { onMount } from 'svelte';
+	import { writable } from 'svelte/store';
+
+	export let appVersion = writable('');
 
 	let ready = false;
 	let showPartsPopup = false;
 
-	onMount(() => {
+	onMount(async() => {
 		ready = true;
+		const version = await window.electron.getAppVersion();
+		appVersion.set(version);
 	});
 
 	function openPartsPopup() {
@@ -20,7 +25,7 @@
 
 <div class="clock">
 	<Clock />
-	<span id="getAppVersion">...</span>
+	<span id="getAppVersion">Versão: {$appVersion}</span>
 </div>
 
 <nav class="nav-main">
@@ -79,7 +84,7 @@
 		left: 50%;
 		width: 70%;
 		transform: translate(-50%, -50%);
-		background-color: #fff; 
+		background-color: #fff;
 		padding: 10px;
 		border-radius: 5px;
 		box-shadow: 0 10px 20px rgba(0, 0, 0, 0.6);
@@ -105,7 +110,7 @@
 		gap: 2%;
 		width: 100%;
 		height: 100%;
-		color: orange;
+		color: $color2;
 
 		a {
 			display: flex;
@@ -119,8 +124,8 @@
 			transition: 200ms;
 
 			&:hover {
-				color: orange;
-				background-color: #8a2be255;
+				color: $color2;
+				background-color: #333333;
 			}
 		}
 	}
@@ -132,6 +137,4 @@
 		font-size: 10pt;
 		text-align: left;
 	}
-
-	
 </style>

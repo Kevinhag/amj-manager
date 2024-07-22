@@ -1,6 +1,6 @@
 {
 	"name": "amj-manager",
-	"version": "0.0.1",
+	"version": "0.1.0",
 	"private": true,
 	"description": "AMJ Electron App.",
 	"main": "src/electron.cjs",
@@ -17,8 +17,9 @@
 		"dev:electron": "electron src/electron.cjs",
 		"dev:server": "nodemon ./src/lib/server/index.js",
 		"build": "cross-env NODE_ENV=production npm run build:svelte && npm run build:electron",
+		"publish": "cross-env NODE_ENV=production npm run build:svelte && electron-builder --win --publish always --config build.config.json",
 		"build:svelte": "vite build",
-		"build:electron": "electron-builder --win --publish always --config build.config.json",
+		"build:electron": "electron-builder --win --config build.config.json",
 		"postinstall": "electron-builder install-app-deps"
 	},
 	"engines": {

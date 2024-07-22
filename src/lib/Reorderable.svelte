@@ -199,14 +199,7 @@
 		background: var(--component-bg-hover);
 	}
 
-	.unfocus {
-		opacity: 0.333333;
-	}
 
-	.handle {
-		color: gray;
-		opacity: 0.333;
-	}
 
 	.marker {
 		left: 0px;

@@ -8,20 +8,22 @@ const fs = require('fs');
 const express = require('express');
 const Database = require('better-sqlite3');
 const cors = require('cors');
+const packageJson = require('../package.json'); // Importa o package.json
 
 // Obtenha o diretório de dados do usuário do Electron
 const userDataPath = app.getPath('userData');
 
 // Defina a pasta onde o arquivo .db será criado
 const dbFolderPath = path.join(userDataPath, 'userdb');
-const dbPath = path.join("./", 'data.db');
+const dbPath = path.join(dbFolderPath, 'data.db');
 
 // Certifique-se de que a pasta existe
 if (!fs.existsSync(dbFolderPath)) {
   fs.mkdirSync(dbFolderPath, { recursive: true });
 }
 
-autoUpdater.autoDownload = false;
+// Configurações do autoUpdater
+autoUpdater.autoDownload = true;
 autoUpdater.autoInstallOnAppQuit = true;
 
 // Cria uma instância do servidor Express
@@ -124,9 +126,93 @@ exServer.post('/api/insert-part', async (req, res) => {
     const insertPartQuery = `INSERT INTO peca (nome, marca) VALUES (?, ?)`;
     const stmt = db.prepare(insertPartQuery);
     const info = stmt.run(nome, marca);
-    res.send({ message: 'Peça inserida com sucesso!', partId: info.lastInsertRowid });
+    const newPart = { id: info.lastInsertRowid, nome, marca }; // Retorna a nova peça com id, nome e marca
+    res.send(newPart);
   } catch (error) {
     console.error("Erro ao inserir peça:", error.message);
+    res.status(500).send({ error: error.message });
+  }
+});
+
+
+exServer.post('/api/insert-client', async (req, res) => {
+  try {
+    const { nome, cpf, endereco, bairro, cidade, numero_casa, complemento, tel, tel2 } = req.body;
+    const insertClientQuery = `INSERT INTO cliente (nome, cpf, endereco, bairro, cidade, numero_casa, complemento, tel, tel2) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    const stmt = db.prepare(insertClientQuery);
+    const info = stmt.run(nome, cpf, endereco, bairro, cidade, numero_casa, complemento, tel, tel2);
+    res.send({ message: 'Cliente inserido com sucesso!', clientId: info.lastInsertRowid });
+  } catch (error) {
+    console.error("Erro ao inserir cliente:", error.message);
+    res.status(500).send({ error: error.message });
+  }
+});
+
+exServer.put('/api/update-client', async (req, res) => {
+  try {
+    const { id, nome, cpf, endereco, bairro, cidade, numero_casa, complemento, tel, tel2 } = req.body;
+    const updateClientQuery = `UPDATE cliente SET nome = ?, cpf = ?, endereco = ?, bairro = ?, cidade = ?, numero_casa = ?, complemento = ?, tel = ?, tel2 = ? WHERE id = ?`;
+    const stmt = db.prepare(updateClientQuery);
+    const info = stmt.run(nome, cpf, endereco, bairro, cidade, numero_casa, complemento, tel, tel2, id);
+    
+    if (info.changes === 0) {
+      throw new Error('Nenhum cliente encontrado com o ID fornecido.');
+    }
+
+    res.send({ message: 'Cliente atualizado com sucesso!' });
+  } catch (error) {
+    console.error("Erro ao atualizar cliente:", error.message);
+    res.status(500).send({ error: error.message });
+  }
+});
+
+exServer.delete('/api/delete-client/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deleteClientQuery = `DELETE FROM cliente WHERE id = ?`;
+    const stmt = db.prepare(deleteClientQuery);
+    const info = stmt.run(id);
+
+    if (info.changes === 0) {
+      throw new Error('Nenhum cliente encontrado com o ID fornecido.');
+    }
+
+    res.send({ message: 'Cliente deletado com sucesso!' });
+  } catch (error) {
+    console.error("Erro ao deletar cliente:", error.message);
+    res.status(500).send({ error: error.message });
+  }
+});
+
+// Inserir carro
+exServer.post('/api/insert-car', async (req, res) => {
+  try {
+    const { cliente_id, modelo, marca, placa, ano, km, potencia, observacao, obsretifica } = req.body;
+    const insertCarQuery = `INSERT INTO carro (cliente_id, modelo, marca, placa, ano, km, potencia, observacao, obsretifica) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    const stmt = db.prepare(insertCarQuery);
+    const info = stmt.run(cliente_id, modelo, marca, placa, ano, km, potencia, observacao, obsretifica);
+    res.send({ message: 'Carro inserido com sucesso!', carId: info.lastInsertRowid });
+  } catch (error) {
+    console.error("Erro ao inserir carro:", error.message);
+    res.status(500).send({ error: error.message });
+  }
+});
+
+// Atualizar carro
+exServer.put('/api/update-car', async (req, res) => {
+  try {
+    const { id, cliente_id, modelo, marca, placa, ano, km, potencia, observacao, obsretifica } = req.body;
+    const updateCarQuery = `UPDATE carro SET cliente_id = ?, modelo = ?, marca = ?, placa = ?, ano = ?, km = ?, potencia = ?, observacao = ?, obsretifica = ? WHERE id = ?`;
+    const stmt = db.prepare(updateCarQuery);
+    const info = stmt.run(cliente_id, modelo, marca, placa, ano, km, potencia, observacao, obsretifica, id);
+    
+    if (info.changes === 0) {
+      throw new Error('Nenhum carro encontrado com o ID fornecido.');
+    }
+
+    res.send({ message: 'Carro atualizado com sucesso!' });
+  } catch (error) {
+    console.error("Erro ao atualizar carro:", error.message);
     res.status(500).send({ error: error.message });
   }
 });
@@ -269,6 +355,10 @@ function createWindow() {
     windowState.saveState(mainWindow);
   });
 
+  mainWindow.webContents.on('did-finish-load', () => {
+    mainWindow.webContents.send('app_version', { version: packageJson.version });
+  });
+
   return mainWindow;
 }
 
@@ -304,10 +394,10 @@ function createMainWindow() {
   if (dev) loadVite(port);
   else serveURL(mainWindow);
 
-  autoUpdater.checkForUpdates();
+  autoUpdater.checkForUpdatesAndNotify();
 
   ipcMain.on('getAppVersion', (event) => {
-    event.reply('getAppVersion', { version: app.getVersion() });
+    event.reply('getAppVersion', { version: packageJson.version });
   });
 
   ipcMain.on('restart_app', () => {
@@ -319,7 +409,7 @@ function createMainWindow() {
   });
 
   ipcMain.handle('getAppVersion', () => {
-    return app.getVersion();
+    return packageJson.version;
   });
 
   ipcMain.on('print-to-pdf', async (event, content) => {
@@ -390,7 +480,14 @@ ipcMain.on('fetch-data', (event) => {
   }
 });
 
-autoUpdater.on('update-available', () => {
+autoUpdater.setFeedURL({
+  provider: 'github',
+  repo: 'amj-manager',
+  owner: 'Kevinhag',
+  token: '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'
+});
+
+/* autoUpdater.on('update-available', () => {
   dialog
     .showMessageBox({
       type: 'info',
@@ -403,7 +500,7 @@ autoUpdater.on('update-available', () => {
         autoUpdater.downloadUpdate();
       }
     });
-});
+}); */
 
 autoUpdater.on('update-downloaded', () => {
   dialog
@@ -411,7 +508,7 @@ autoUpdater.on('update-downloaded', () => {
       type: 'info',
       title: 'Update Ready',
       message: 'Update downloaded. It will be installed on restart. Restart now?',
-      buttons: ['Yes', 'Later'],
+      buttons: ['Yes', 'Later']
     })
     .then((result) => {
       if (result.response === 0) {

@@ -1,19 +1,28 @@
 <script>
 	import { onMount } from 'svelte';
+	import Notification from '$lib/Notification.svelte'; // Certifique-se de que o caminho está correto
 
 	let clients = [];
-	let selectedClient;
-	let selectedClientData;
+	let selectedClient = '';
+	let selectedClientData = null;
+	let notificationMessage = '';
+	let notificationType = '';
 
-	$: selectedClientData = clients.find((client) => client.id == selectedClient);
-
-	onMount(() => {
+	function fetchClients() {
 		fetch('http://localhost:3000/api/clients')
 			.then((response) => response.json())
 			.then((data) => {
 				clients = data;
 				console.log(data);
+			})
+			.catch((error) => {
+				console.error('Erro ao buscar clientes:', error);
+				showNotification('Erro ao buscar clientes', 'error');
 			});
+	}
+
+	onMount(() => {
+		fetchClients();
 	});
 
 	let nome = '';
@@ -26,7 +35,7 @@
 	let tel = '';
 	let tel2 = '';
 
-	function handleSubmit() {
+	function addClient() {
 		const newClient = {
 			nome,
 			cpf,
@@ -39,7 +48,7 @@
 			tel2,
 		};
 
-		fetch('http://localhost:3000/api/clients', {
+		fetch('http://localhost:3000/api/insert-client', {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
@@ -48,17 +57,81 @@
 		})
 			.then((response) => response.json())
 			.then((data) => {
-				console.log('Client added:', data);
+				console.log('Cliente adicionado:', data);
 				clients = [...clients, data];
-				resetForm();
-				alert('Cliente adicionado com sucesso!');
+				clearForm();
+				fetchClients();
+				showNotification('Cliente adicionado com sucesso!', 'success');
 			})
 			.catch((error) => {
-				console.error('Error adding client:', error);
+				console.error('Erro ao adicionar cliente:', error);
+				showNotification('Erro ao adicionar cliente', 'error');
 			});
 	}
 
-	function resetForm() {
+	function updateClient() {
+		const updatedClient = {
+			id: selectedClientData.id,
+			nome: selectedClientData.nome,
+			cpf: selectedClientData.cpf,
+			endereco: selectedClientData.endereco,
+			bairro: selectedClientData.bairro,
+			cidade: selectedClientData.cidade,
+			numero_casa: selectedClientData.numero_casa,
+			complemento: selectedClientData.complemento,
+			tel: selectedClientData.tel,
+			tel2: selectedClientData.tel2,
+		};
+
+		fetch('http://localhost:3000/api/update-client', {
+			method: 'PUT',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify(updatedClient),
+		})
+			.then((response) => response.json())
+			.then((data) => {
+				clients = clients.map((client) =>
+					client.id == selectedClientData.id ? data : client,
+				);
+				console.log('Cliente atualizado:', data);
+				clearForm();
+				fetchClients();
+				showNotification('Cliente atualizado com sucesso!', 'success');
+			})
+			.catch((error) => {
+				console.error('Erro ao atualizar cliente:', error);
+				showNotification('Erro ao atualizar cliente', 'error');
+			});
+	}
+
+	function deleteClient(client) {
+		fetch(`http://localhost:3000/api/delete-client/${client.id}`, {
+			method: 'DELETE',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+		})
+			.then((response) => response.json())
+			.then((data) => {
+				clients = clients.filter((c) => c.id !== client.id);
+				console.log('Cliente deletado:', data);
+				clearForm();
+				showNotification('Cliente deletado com sucesso!', 'success');
+			})
+			.catch((error) => {
+				console.error('Erro ao deletar cliente:', error);
+				showNotification('Erro ao deletar cliente', 'error');
+			});
+	}
+
+	function showNotification(message, type) {
+		notificationMessage = message;
+		notificationType = type;
+	}
+
+	function clearForm() {
 		nome = '';
 		cpf = '';
 		endereco = '';
@@ -71,6 +144,8 @@
 		selectedClient = null;
 		selectedClientData = null;
 	}
+
+	$: selectedClientData = clients.find((client) => client.id == selectedClient);
 </script>
 
 <section>
@@ -83,66 +158,112 @@
 		</div>
 	</div>
 	<div class="main">
-		<form class="client-add" on:submit|preventDefault={handleSubmit}>
-			<div class="form-person">
-				<label for="name">Nome</label>
-				<input type="text" id="name" bind:value={nome} required />
+		<div class="client-add">
+			<div class="form-client">
+				<label for="nome">Nome</label>
+				{#if selectedClientData != null}
+					<input type="text" id="nome" bind:value={selectedClientData.nome} />
+				{:else}
+					<input type="text" id="nome" bind:value={nome} />
+				{/if}
 			</div>
-			<div class="form-person">
+			<div class="form-client">
 				<label for="cpf">CPF</label>
-				<input type="text" id="cpf" bind:value={cpf} required />
+				{#if selectedClientData != null}
+					<input type="text" id="cpf" bind:value={selectedClientData.cpf} />
+				{:else}
+					<input type="text" id="cpf" bind:value={cpf} />
+				{/if}
 			</div>
-			<div class="form-person">
+			<div class="form-client">
 				<label for="endereco">Endereço</label>
-				<input type="text" id="endereco" bind:value={endereco} required />
+				{#if selectedClientData != null}
+					<input type="text" id="endereco" bind:value={selectedClientData.endereco} />
+				{:else}
+					<input type="text" id="endereco" bind:value={endereco} />
+				{/if}
 			</div>
-			<div class="form-person">
+			<div class="form-client">
 				<label for="bairro">Bairro</label>
-				<input type="text" id="bairro" bind:value={bairro} required />
+				{#if selectedClientData != null}
+					<input type="text" id="bairro" bind:value={selectedClientData.bairro} />
+				{:else}
+					<input type="text" id="bairro" bind:value={bairro} />
+				{/if}
 			</div>
-			<div class="form-person">
+			<div class="form-client">
 				<label for="cidade">Cidade</label>
-				<input type="text" id="cidade" bind:value={cidade} required />
+				{#if selectedClientData != null}
+					<input type="text" id="cidade" bind:value={selectedClientData.cidade} />
+				{:else}
+					<input type="text" id="cidade" bind:value={cidade} />
+				{/if}
 			</div>
-			<div class="form-person">
+			<div class="form-client">
 				<label for="numero_casa">Número</label>
-				<input type="text" id="numero_casa" bind:value={numero_casa} required />
+				{#if selectedClientData != null}
+					<input type="text" id="numero_casa" bind:value={selectedClientData.numero_casa}	/>
+				{:else}
+					<input type="text" id="numero_casa" bind:value={numero_casa} />
+				{/if}
 			</div>
-			<div class="form-person">
+			<div class="form-client">
 				<label for="complemento">Complemento</label>
-				<input type="text" id="complemento" bind:value={complemento} />
+				{#if selectedClientData != null}
+					<input
+						type="text"
+						id="complemento"
+						bind:value={selectedClientData.complemento}
+					/>
+				{:else}
+					<input type="text" id="complemento" bind:value={complemento} />
+				{/if}
 			</div>
-			<div class="form-person">
+			<div class="form-client">
 				<label for="tel">Telefone</label>
-				<input type="text" id="tel" bind:value={tel} required />
+				{#if selectedClientData != null}
+					<input type="text" id="tel" bind:value={selectedClientData.tel} />
+				{:else}
+					<input type="text" id="tel" bind:value={tel} />
+				{/if}
 			</div>
-			<div class="form-person">
+			<div class="form-client">
 				<label for="tel2">Telefone 2</label>
-				<input
-					type="text"
-					id="tel2"
-					bind:value={tel2}
-					pattern="^(\+\d{1, 2}\s?)?(\(\d{1, 4}\)\s?)?(\d{1, 2}-?)?(\d{8,9})$"
-				/>
+				{#if selectedClientData != null}
+					<input type="text" id="tel2" bind:value={selectedClientData.tel2} />
+				{:else}
+					<input type="text" id="tel2" bind:value={tel2} />
+				{/if}
 			</div>
 			<div>
-				<button type="submit">Adicionar Cliente</button>
-				<button type="button" on:click={resetForm}>Novo Cliente</button>
+				{#if selectedClientData}
+					<button type="button" on:click={updateClient}>Alterar Cliente</button>
+					<!-- <button type="button" on:click={() => deleteClient(selectedClientData)}>
+						Excluir Cliente
+					</button> -->
+					<button type="button" on:click={clearForm}>Novo Cliente</button>
+				{:else}
+					<button type="button" on:click={addClient}>Adicionar Cliente</button>
+					<!-- <button type="button" disabled>Excluir Cliente</button> -->
+					<button type="button" disabled>Novo Cliente</button>
+				{/if}
 			</div>
-		</form>
+		</div>
 
 		<div class="client-list">
-			<select name="clients" id="clients" size="5" bind:value={selectedClient}>
-				{#if clients.length === 0}
-					<option>Nenhum item encontrado</option>
-				{:else}
-					{#each clients as client (client.id)}
-						<option value={client.id}>{client.nome} - {client.cpf}</option>
-					{/each}
-				{/if}
+			<select name="clients" id="clients" size="10" bind:value={selectedClient}>
+				{#each clients as client (client.id)}
+					<option value={client.id}>
+						{client.nome} - {client.cpf}
+					</option>
+				{/each}
 			</select>
 		</div>
 	</div>
+
+	{#if notificationMessage}
+		<Notification message={notificationMessage} type={notificationType} />
+	{/if}
 </section>
 
 <style lang="scss">
@@ -169,7 +290,6 @@
 				padding: 10px;
 			}
 		}
-
 		.main {
 			display: grid;
 			grid-template-columns: 1fr 1fr;
@@ -189,14 +309,10 @@
 				justify-content: center;
 				height: 100%;
 				border: 1px solid #cccccc33;
-				border-radius: $radius;
+				border-radius: 10px;
 				select {
 					height: 100%;
 					font: 700 14px 'Roboto Mono', Arial, sans-serif;
-				}
-				#clients {
-					width: 100%;
-					height: 100%;
 				}
 			}
 			.client-add {
@@ -212,23 +328,18 @@
 				border: 1px solid #cccccc33;
 				border-radius: 10px;
 
-				.form-person {
+				.form-client {
 					width: 40%;
 					display: flex;
 					flex-direction: column;
 					gap: 5px;
-					label {
-						color: $maintextcolor;
-					}
+
 					input {
 						font: 700 14px 'Roboto Mono', Arial, sans-serif;
 						padding: 5px;
 						border-radius: 5px;
 						border: 1px solid #cccccc33;
 					}
-				}
-				#name {
-					width: 100%;
 				}
 			}
 		}

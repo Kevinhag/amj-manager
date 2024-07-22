@@ -52,19 +52,22 @@ button {
 	color: $maintextcolor;
 	font-size: 1rem;
 	padding: 10px 20px;
+	margin-top: 10px;
 	border-radius: 5px;
+	background-color: #282828;
 	transition: $transition;
-	border: 1px solid $color;
+	border: 1px solid #cccccc33;
 	&[disabled] {
-		background-color: $bgtestg;
+		background-color: #cccccc33;
 		color: grey;
+		cursor:default;
 		&:hover {
-			background-color: $bgtestg;
+			background-color: #cccccc33;
 			color: grey;
 		}
 	}
 	&:hover {
-		background-color: $color;
+		background-color: $color2;
 		color: $bgcolor;
 	}
 }
@@ -73,14 +76,16 @@ input {
 	background-color: $darker;
 	width: 100%;
 	padding: 5px;
-	border: 1px solid $bgtestg;
+	border: 1px solid #cccccc33;;
 	border-radius: 5px;
 	transition: 200ms;
 	&:hover {
 		background-color: $darkerhover;
+		
 	}
 	&:focus {
 		background-color: $darkerhover;
+		border: 1px solid $color2;
 	}
 }
 
