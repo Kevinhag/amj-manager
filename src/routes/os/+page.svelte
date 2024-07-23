@@ -156,6 +156,8 @@
 			.info td { padding: 5px; }
 			.table th, .table td { border: 1px solid #000; padding: 8px; text-align: left; }
 			.signature { margin-top: 20px; display: flex; justify-content: space-between; }
+			.qtt {width: 100px;}
+			.preco { width: 120px;}
 		  </style>
 		</head>
 		<body>
@@ -173,22 +175,21 @@
 				<td>Data: ${currentDate}</td>
 			  </tr>
 			  <tr>
-				<td>Endereço: ${selectedClientData?.endereco || 'N/A'}</td>
+
 				<td>Fone: ${selectedClientData?.tel || 'N/A'}</td>
 			  </tr>
 			  <tr>
 				<td>Placa Nº: ${selectedCarData?.placa || 'N/A'}</td>
-				<td>Carro: ${selectedCarData?.marca || 'N/A'} - ${selectedCarData?.modelo || 'N/A'}</td>
+				<td>Carro: ${selectedCarData?.modelo || 'N/A'}</td>
 			  </tr>
 			</table>
 			<table class="table">
 			  <thead>
 				<tr>
 				  <th>Nome</th>
-				  <th>Marca</th>
-				  <th>Quantidade</th>
-				  <th>Preço Unitário</th>
-				  <th>Preço</th>
+				  <th class="qtt">Quantidade</th>
+				  <th class="preco">Preço Unitário</th>
+				  <th class="preco">Preço</th>
 				</tr>
 			  </thead>
 			  <tbody>
@@ -197,7 +198,6 @@
 						(part) => `
 				  <tr>
 					<td>${part.nome}</td>
-					<td>${part.marca}</td>
 					<td>${part.quantidade}</td>
 					<td>R$ ${part.preco.toFixed(2)}</td>
 					<td>R$ ${(part.quantidade * part.preco).toFixed(2)}</td>

@@ -1,6 +1,6 @@
 {
 	"name": "amj-manager",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"private": true,
 	"description": "AMJ Electron App.",
 	"main": "src/electron.cjs",
@@ -8,7 +8,7 @@
 	"author": "Kevin Henriques",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/Kevinhag/amj-manager"
+		"url": "https://github.com/Kevinhag/amj-manager.git"
 	},
 	"scripts": {
 		"dev": "cross-env NODE_ENV=dev npm run dev:all",
@@ -16,19 +16,22 @@
 		"dev:svelte": "vite dev",
 		"dev:electron": "electron src/electron.cjs",
 		"dev:server": "nodemon ./src/lib/server/index.js",
-		"build": "cross-env NODE_ENV=production npm run build:svelte && npm run build:electron",
-		"publish": "cross-env NODE_ENV=production npm run build:svelte && electron-builder --win --publish always --config build.config.json",
+		"build": "node preload-env.cjs \"cross-env NODE_ENV=production npm run build:svelte && npm run build:electron\"",
+		"publish": "node preload-env.cjs \"cross-env NODE_ENV=production npm run build:svelte && electron-builder --win --publish always --config build.config.json\"",
 		"build:svelte": "vite build",
 		"build:electron": "electron-builder --win --config build.config.json",
 		"postinstall": "electron-builder install-app-deps"
 	},
+
 	"engines": {
 		"npm": ">=7",
 		"yarn": "use npm - https://github.com/FractalHQ/sveltekit-electron/issues/12#issuecomment-1068399385"
 	},
+
 	"browserslist": [
 		"Chrome 89"
 	],
+
 	"dependencies": {
 		"better-sqlite3": "^11.1.2",
 		"cors": "^2.8.5",
@@ -43,6 +46,7 @@
 		"jspdf": "^2.5.1",
 		"nodemon": "^3.0.3"
 	},
+
 	"devDependencies": {
 		"@electron/rebuild": "^3.6.0",
 		"@sveltejs/adapter-static": "2.0.1",

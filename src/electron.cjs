@@ -1,3 +1,4 @@
+require('dotenv').config();
 const windowStateManager = require('electron-window-state');
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const { autoUpdater } = require('electron-updater');
@@ -25,6 +26,10 @@ if (!fs.existsSync(dbFolderPath)) {
 // Configurações do autoUpdater
 autoUpdater.autoDownload = true;
 autoUpdater.autoInstallOnAppQuit = true;
+
+// Configure o feed URL para atualizações
+const feedURL = `https://api.github.com/repos/Kevinhag/amj-manager/releases/download/latest?access_token=${process.env.GH_TOKEN}`;
+autoUpdater.setFeedURL({ url: feedURL });
 
 // Cria uma instância do servidor Express
 const exServer = express();
@@ -480,12 +485,12 @@ ipcMain.on('fetch-data', (event) => {
   }
 });
 
-autoUpdater.setFeedURL({
+/* autoUpdater.setFeedURL({
   provider: 'github',
   repo: 'amj-manager',
   owner: 'Kevinhag',
-  token: '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'
-});
+  token: GH_TOKEN,
+}); */
 
 /* autoUpdater.on('update-available', () => {
   dialog

@@ -267,6 +267,15 @@
 </section>
 
 <style lang="scss">
+
+	input {
+		color: $maintextcolor;
+		width: 100%;
+		padding: 5px;
+		border-radius: 5px;
+		border: 1px solid #cccccc33;
+	}
+
 	section {
 		display: flex;
 		flex-direction: column;
