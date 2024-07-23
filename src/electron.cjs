@@ -1,15 +1,18 @@
 require('dotenv').config();
-const windowStateManager = require('electron-window-state');
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const { autoUpdater } = require('electron-updater');
-const contextMenu = require('electron-context-menu');
-const serve = require('electron-serve');
 const path = require('path');
 const fs = require('fs');
 const express = require('express');
 const Database = require('better-sqlite3');
 const cors = require('cors');
 const packageJson = require('../package.json'); // Importa o package.json
+const windowStateManager = require('electron-window-state');
+const contextMenu = require('electron-context-menu');
+const serve = require('electron-serve');
+
+// Verifique se o token está sendo carregado
+console.log('GH_TOKEN:', process.env.GH_TOKEN);
 
 // Obtenha o diretório de dados do usuário do Electron
 const userDataPath = app.getPath('userData');
@@ -28,8 +31,13 @@ autoUpdater.autoDownload = true;
 autoUpdater.autoInstallOnAppQuit = true;
 
 // Configure o feed URL para atualizações
-const feedURL = `https://api.github.com/repos/Kevinhag/amj-manager/releases/download/latest?access_token=${process.env.GH_TOKEN}`;
-autoUpdater.setFeedURL({ url: feedURL });
+autoUpdater.setFeedURL({
+  provider: 'github',
+  repo: 'amj-manager',
+  owner: 'Kevinhag',
+  private: true,
+  token: process.env.GH_TOKEN
+});
 
 // Cria uma instância do servidor Express
 const exServer = express();
@@ -40,53 +48,53 @@ const db = new Database(dbPath);
 
 // Função para verificar se a tabela existe e criar se necessário
 function createTables() {
-    db.exec(`
-      CREATE TABLE IF NOT EXISTS cliente (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nome TEXT NOT NULL,
-        cpf TEXT UNIQUE,
-        endereco TEXT,
-        bairro TEXT,
-        cidade TEXT,
-        numero_casa TEXT,
-        complemento TEXT,
-        tel TEXT,
-        tel2 TEXT
-      );
-      CREATE TABLE IF NOT EXISTS carro (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        cliente_id INTEGER REFERENCES cliente(id) ON DELETE CASCADE,
-        placa TEXT UNIQUE,
-        marca TEXT,
-        modelo TEXT,
-        ano INTEGER,
-        km INTEGER,
-        potencia INTEGER,
-        observacao TEXT,
-        obsretifica TEXT
-      );
-      CREATE TABLE IF NOT EXISTS peca (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nome TEXT,
-        marca TEXT
-      );
-      CREATE TABLE IF NOT EXISTS ordem_servico (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        carro_id INTEGER REFERENCES carro(id) ON DELETE CASCADE,
-        observacao TEXT,
-        data DATE NOT NULL,
-        valor_total DECIMAL(10, 2) NOT NULL
-      );
-      CREATE TABLE IF NOT EXISTS troca_peca (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        ordem_servico_id INTEGER REFERENCES ordem_servico(id) ON DELETE CASCADE,
-        nome_peca TEXT NOT NULL,
-        marca_peca TEXT NOT NULL,
-        quantidade INTEGER NOT NULL,
-        preco_unitario DECIMAL(10, 2) NOT NULL
-      );
-    `);
-    console.log('Tables created successfully');
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS cliente (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nome TEXT NOT NULL,
+      cpf TEXT UNIQUE,
+      endereco TEXT,
+      bairro TEXT,
+      cidade TEXT,
+      numero_casa TEXT,
+      complemento TEXT,
+      tel TEXT,
+      tel2 TEXT
+    );
+    CREATE TABLE IF NOT EXISTS carro (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      cliente_id INTEGER REFERENCES cliente(id) ON DELETE CASCADE,
+      placa TEXT UNIQUE,
+      marca TEXT,
+      modelo TEXT,
+      ano INTEGER,
+      km INTEGER,
+      potencia INTEGER,
+      observacao TEXT,
+      obsretifica TEXT
+    );
+    CREATE TABLE IF NOT EXISTS peca (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nome TEXT,
+      marca TEXT
+    );
+    CREATE TABLE IF NOT EXISTS ordem_servico (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      carro_id INTEGER REFERENCES carro(id) ON DELETE CASCADE,
+      observacao TEXT,
+      data DATE NOT NULL,
+      valor_total DECIMAL(10, 2) NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS troca_peca (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      ordem_servico_id INTEGER REFERENCES ordem_servico(id) ON DELETE CASCADE,
+      nome_peca TEXT NOT NULL,
+      marca_peca TEXT NOT NULL,
+      quantidade INTEGER NOT NULL,
+      preco_unitario DECIMAL(10, 2) NOT NULL
+    );
+  `);
+  console.log('Tables created successfully');
 }
 
 createTables();
@@ -138,7 +146,6 @@ exServer.post('/api/insert-part', async (req, res) => {
     res.status(500).send({ error: error.message });
   }
 });
-
 
 exServer.post('/api/insert-client', async (req, res) => {
   try {
@@ -485,27 +492,12 @@ ipcMain.on('fetch-data', (event) => {
   }
 });
 
-/* autoUpdater.setFeedURL({
+autoUpdater.setFeedURL({
   provider: 'github',
   repo: 'amj-manager',
   owner: 'Kevinhag',
-  token: GH_TOKEN,
-}); */
-
-/* autoUpdater.on('update-available', () => {
-  dialog
-    .showMessageBox({
-      type: 'info',
-      title: 'Update Available',
-      message: 'A new update is available. Do you want to download it now?',
-      buttons: ['Yes', 'No'],
-    })
-    .then((result) => {
-      if (result.response === 0) {
-        autoUpdater.downloadUpdate();
-      }
-    });
-}); */
+  token: process.env.GH_TOKEN,
+});
 
 autoUpdater.on('update-downloaded', () => {
   dialog
