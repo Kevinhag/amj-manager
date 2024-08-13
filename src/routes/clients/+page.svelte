@@ -238,13 +238,13 @@
 			<div>
 				{#if selectedClientData}
 					<button type="button" on:click={updateClient}>Alterar Cliente</button>
-					<!-- <button type="button" on:click={() => deleteClient(selectedClientData)}>
+					<button type="button" on:click={() => deleteClient(selectedClientData)}>
 						Excluir Cliente
-					</button> -->
+					</button>
 					<button type="button" on:click={clearForm}>Novo Cliente</button>
 				{:else}
 					<button type="button" on:click={addClient}>Adicionar Cliente</button>
-					<!-- <button type="button" disabled>Excluir Cliente</button> -->
+					<button type="button" disabled>Excluir Cliente</button>
 					<button type="button" disabled>Novo Cliente</button>
 				{/if}
 			</div>

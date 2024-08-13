@@ -30,24 +30,30 @@
 	$: selectedCarData = cars.find((car) => car.id == selectedCar);
   
 	function updateCar() {
-	  fetch(`http://localhost:3000/api/update-car`, {
-		method: 'PUT',
-		headers: {
-		  'Content-Type': 'application/json',
-		},
-		body: JSON.stringify(selectedCarData),
-	  })
-		.then((response) => response.text())
-		.then((data) => {
-		  showNotification('Carro alterado com sucesso!', 'success');
-		  console.log('Car updated:', data);
-		  fetchCars(); // Atualiza a lista de carros
-		})
-		.catch((error) => {
-		  showNotification('Erro ao atualizar carro', 'error');
-		  console.error('Erro ao atualizar carro:', error);
-		});
-	}
+  if (!selectedCarData) {
+    showNotification('Nenhum carro selecionado para atualizar', 'error');
+    return;
+  }
+
+  fetch(`http://localhost:3000/api/update-car`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(selectedCarData),
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      showNotification('Carro alterado com sucesso!', 'success');
+      console.log('Car updated:', data);
+      fetchCars(); // Atualiza a lista de carros
+    })
+    .catch((error) => {
+      showNotification('Erro ao atualizar carro', 'error');
+      console.error('Erro ao atualizar carro:', error);
+    });
+}
+
   
 	function addCar() {
 	  const newCarData = {
@@ -73,7 +79,7 @@
 		.then((data) => {
 		  showNotification('Carro adicionado com sucesso!', 'success');
 		  console.log('Car added:', data);
-		  fetchCars(); // Atualiza a lista de carros
+		  fetchCars();
 		})
 		.catch((error) => {
 		  showNotification('Erro ao adicionar carro', 'error');
@@ -81,6 +87,29 @@
 		});
 	}
   
+	function deleteCar() {
+  if (!selectedCarData || !selectedCarData.id) {
+    showNotification('Nenhum carro selecionado para deletar', 'error');
+    return;
+  }
+
+  fetch(`http://localhost:3000/api/delete-car/${selectedCarData.id}`, {
+    method: 'DELETE',
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      showNotification('Carro deletado com sucesso!', 'success');
+      console.log('Car deleted:', data);
+      fetchCars(); // Atualiza a lista de carros
+      selectedCarData = null; // Reseta a seleção
+    })
+    .catch((error) => {
+      showNotification('Erro ao deletar carro', 'error');
+      console.error('Erro ao deletar carro:', error);
+    });
+}
+
+
 	function showNotification(message, type) {
 	  notificationMessage = message;
 	  notificationType = type;
@@ -194,6 +223,12 @@
 		  {:else}
 			<button disabled>Novo Carro</button>
 		  {/if}
+		  {#if selectedCarData != null}
+		  <button type="button" on:click={deleteCar}>Deletar Carro</button>
+		{:else}
+		  <button type="button" disabled>Deletar Carro</button>
+		{/if}
+		  
 		</div>
 	  </div>
   

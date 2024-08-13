@@ -34,6 +34,7 @@
 	<a href="/clients">Clientes</a>
 	<a href="/cars">Carros</a>
 	<a href="/parts">Peças</a>
+	<!-- <a href="/checkos">Consultar OS</a> -->
 	<!-- <a href="/report">Relatórios</a> -->
 </nav>
 

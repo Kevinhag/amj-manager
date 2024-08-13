@@ -3,6 +3,7 @@
 	import Notification from '$lib/Notification.svelte';
 	import ConfirmDialog from '$lib/ConfirmDialog.svelte';
 	import Reorderable from '$lib/Reorderable.svelte';
+	import AddPart from '$lib/AddPart.svelte';
 
 	let osItemList = [];
 	let parts = [];
@@ -17,12 +18,26 @@
 	let searchPartQuery = '';
 	let observacao = '';
 
+	let formaPagamento = '';
+	let parcelas = '';
 	let message = '';
 	let type = 'info'; // 'info', 'error', 'success'
 	let showConfirmDialog = false;
 	let confirmMessage = '';
 	let onConfirmAction = null;
 	let onCancelAction = null;
+
+	let showAddPart = false;
+
+	function openAddPart() {
+		showAddPart = true;
+	}
+
+	function closeAddPart() {
+		showAddPart = false;
+		fetchData();
+	}
+	$: selectedPag = 0;
 
 	$: selectedPartData = parts.find((part) => part.id == selectedPart);
 	$: selectedCarData = cars.find((car) => car.id == selectedCar);
@@ -31,7 +46,10 @@
 	$: filteredClients = clients.filter(
 		(client) =>
 			client.nome.toLowerCase().includes(searchQuery) ||
-			client.cpf.toLowerCase().includes(searchQuery),
+			client.cpf.toLowerCase().includes(searchQuery) ||
+			client.tel.toLowerCase().includes(searchQuery) ||
+			client.tel2.toLowerCase().includes(searchQuery),
+			// inserir filtro pela placa do carro do cliente
 	);
 	$: filteredParts = parts.filter(
 		(part) =>
@@ -72,6 +90,11 @@
 			return;
 		}
 
+		let formaPagCompleta = formaPagamento;
+		if (formaPagamento === 'Crédito parcelado' || formaPagamento === 'Parcelado') {
+			formaPagCompleta += ` em ${parcelas}`;
+		}
+
 		showConfirmation(
 			'Deseja finalizar está Ordem de Serviço(OS)?',
 			async () => {
@@ -81,6 +104,7 @@
 					data: new Date().toISOString(),
 					valorTotal: addedParts.reduce((total, part) => total + part.quantidade * part.preco, 0),
 					itens: addedParts,
+					formaPagamento: formaPagCompleta,
 				};
 
 				try {
@@ -140,6 +164,13 @@
 		const totalValue = addedParts.reduce((sum, part) => sum + part.quantidade * part.preco, 0);
 		const currentDate = new Date().toLocaleDateString();
 
+		let formaPagCompleta = formaPagamento;
+		if (formaPagamento === 'Crédito parcelado' || formaPagamento === 'Parcelado') {
+			formaPagCompleta += ` em ${parcelas}`;
+		}
+
+
+
 		return `
 		<html lang="pt-BR">
 		<head>
@@ -182,6 +213,9 @@
 				<td>Placa Nº: ${selectedCarData?.placa || 'N/A'}</td>
 				<td>Carro: ${selectedCarData?.modelo || 'N/A'}</td>
 			  </tr>
+			<tr>
+            	<td>Forma de Pagamento: ${formaPagCompleta || 'N/A'}</td>
+          	</tr>
 			</table>
 			<table class="table">
 			  <thead>
@@ -256,6 +290,20 @@
 
 <section>
 	<div class="form-main">
+
+		{#if showAddPart}
+        <!-- Modal Overlay -->
+			<!-- svelte-ignore a11y-click-events-have-key-events -->
+			<div class="modal-overlay" on:click={closeAddPart}>
+				<div class="modal-content" on:click|stopPropagation>
+					<!-- Componente AddPart -->
+					<AddPart />
+					<!-- Botão para fechar o modal -->
+					<button on:click={closeAddPart}>Fechar</button>
+				</div>
+			</div>
+		{/if}
+
 		<!-- Clientes -->
 		<div class="form-client" class:active-border={selectedClient !== ''}>
 			<h2>Clientes:</h2>
@@ -330,6 +378,7 @@
 				placeholder="Pesquisar Peças:"
 				on:input={handlePartSearch}
 			/>
+			
 			<select name="parts" id="parts" size="4" bind:value={selectedPart}>
 				{#each filteredParts as part (part.id)}
 					<option value={part.id}>
@@ -337,9 +386,13 @@
 					</option>
 				{/each}
 			</select>
-			<button type="button" on:click={addPartList}>Adicionar</button>
+			<div>
+				<button type="button" on:click={openAddPart}>Nova Peça</button>
+				<button type="button" on:click={addPartList}>Adicionar à OS</button>
+			</div>
 		</div>
 	</div>
+
 	<div class="form-main">
 		<!-- Ordem de Serviço -->
 		<div class="os-part-list">
@@ -347,7 +400,36 @@
 			<div class="reorderable-container grid-item">
 				<Reorderable bind:list={addedParts} update={(value) => (addedParts = value)} />
 			</div>
+			
 			<div class="grid-item">
+				<div>
+					<label for="form-pag">Forma de pagamento:</label>
+					<select name="form-pag" id="form-pag" bind:value={formaPagamento}>
+						<option value="" disabled selected hidden>Selecione a forma de pagamento</option>
+						<option value="Crédito á vista">Crédito á vista</option>
+						<option value="Crédito parcelado">Crédito parcelado</option>
+						<option value="Débito">Débito</option>
+						<option value="Á vista">Á vista</option>
+						<option value="Parcelado">Parcelado</option>
+					</select>
+					{#if formaPagamento === 'Crédito parcelado' || formaPagamento === 'Parcelado'}
+					<select name="pag-x" id="pag-x" bind:value={parcelas}>
+						<option value="1x" selected>1x</option>
+						<option value="2x">2x</option>
+						<option value="3x">3x</option>
+						<option value="4x">4x</option>
+						<option value="5x">5x</option>
+						<option value="6x">6x</option>
+						<option value="7x">7x</option>
+						<option value="8x">8x</option>
+						<option value="9x">9x</option>
+						<option value="10x">10x</option>
+						<option value="11x">11x</option>
+						<option value="12x">12x</option>
+					</select>
+					{/if}
+				</div>
+
 				<textarea
 					rows="4"
 					cols="50"
@@ -389,6 +471,46 @@
 		color: #ffffff;
 		font-family: 'Arial', sans-serif;
 	}
+
+	#form-pag, #pag-x {
+		width: 78.5%;
+		height: 30px;
+		background-color: #444;
+		color: #ffffff;
+		border: 1px solid #555;
+		border-radius: 5px;
+		margin-bottom: 10px;
+	}
+
+	#pag-x {
+		width: 20%;
+	}
+
+	.modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.4);
+		backdrop-filter: blur(2px);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .modal-content {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+
+		width: 80%;
+        background: $bgcolor;
+        padding: 20px;
+        border-radius: 20px;
+		border: 1px solid $color2;
+    }
 
 	.text {
 		padding: 0 5px 0 10px;
@@ -456,7 +578,7 @@
 
 	.os-part-list {
 		display: grid;
-		grid-template-rows: 40px 1fr 200px;
+		grid-template-rows: 40px 1fr 240px;
 		// background-color: purple;
 	}
 
@@ -475,7 +597,7 @@
 	.reorderable-container {
 		overflow-y: auto;
 		width: 100%;
-		max-height: 45vh; /* Define a altura máxima conforme necessário */
+		max-height: 35vh; /* Define a altura máxima conforme necessário */
 	}
 
 	#clients,

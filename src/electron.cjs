@@ -12,7 +12,7 @@ const contextMenu = require('electron-context-menu');
 const serve = require('electron-serve');
 
 // Verifique se o token está sendo carregado
-console.log('GH_TOKEN:', process.env.GH_TOKEN);
+// console.log('GH_TOKEN:', process.env.GH_TOKEN);
 
 // Obtenha o diretório de dados do usuário do Electron
 const userDataPath = app.getPath('userData');
@@ -27,6 +27,9 @@ if (!fs.existsSync(dbFolderPath)) {
 }
 
 // Configurações do autoUpdater
+const token = process.env.GH_TOKEN;  // Use o token de acesso pessoal
+const repo = 'Kevinhag/amj-manager'; // Substitua pelo caminho do seu repositório (owner/repo)
+const updateURL = `https://github.com/${repo}/releases/latest/download`;
 autoUpdater.autoDownload = true;
 autoUpdater.autoInstallOnAppQuit = true;
 
@@ -36,13 +39,59 @@ autoUpdater.setFeedURL({
   repo: 'amj-manager',
   owner: 'Kevinhag',
   private: true,
-  token: process.env.GH_TOKEN
+  token: token,
+  url: updateURL
 });
 
+autoUpdater.checkForUpdatesAndNotify();
 // Cria uma instância do servidor Express
 const exServer = express();
 exServer.use(cors());
 exServer.use(express.json());
+
+
+autoUpdater.on('checking-for-update', () => {
+  console.log('Verificando atualizações...');
+});
+
+autoUpdater.on('update-available', (info) => {
+  console.log('Atualização disponível:', info);
+  dialog.showMessageBox({
+    type: 'info',
+    title: 'Atualização disponível',
+    message: 'Uma nova versão está disponível. Baixando agora...',
+    buttons: ['OK']
+  });
+});
+
+
+autoUpdater.on('update-downloaded', () => {
+  dialog.showMessageBox({
+      type: 'info',
+      title: 'Atualização Pronta',
+      message: 'Atualização baixada. Será instalado quando reiniciar o programa. Reiniciar agora?',
+      buttons: ['Sim', 'Não']
+    })
+    .then((result) => {
+      if (result.response === 0) {
+        autoUpdater.quitAndInstall(false, true);
+      }
+    });
+});
+
+autoUpdater.on('update-not-available', () => {
+  dialog.showMessageBox({
+    type: 'info',
+    title: 'Sem Atualizações',
+    message: 'Nenhuma atualização disponível.',
+    buttons: ['OK'],
+  });
+});
+
+autoUpdater.logger = require("electron-log");
+autoUpdater.logger.transports.file.level = "info";
+
+
 
 const db = new Database(dbPath);
 
@@ -61,6 +110,7 @@ function createTables() {
       tel TEXT,
       tel2 TEXT
     );
+    
     CREATE TABLE IF NOT EXISTS carro (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       cliente_id INTEGER REFERENCES cliente(id) ON DELETE CASCADE,
@@ -73,11 +123,13 @@ function createTables() {
       observacao TEXT,
       obsretifica TEXT
     );
+
     CREATE TABLE IF NOT EXISTS peca (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       nome TEXT,
       marca TEXT
     );
+
     CREATE TABLE IF NOT EXISTS ordem_servico (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       carro_id INTEGER REFERENCES carro(id) ON DELETE CASCADE,
@@ -85,6 +137,7 @@ function createTables() {
       data DATE NOT NULL,
       valor_total DECIMAL(10, 2) NOT NULL
     );
+
     CREATE TABLE IF NOT EXISTS troca_peca (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       ordem_servico_id INTEGER REFERENCES ordem_servico(id) ON DELETE CASCADE,
@@ -94,8 +147,26 @@ function createTables() {
       preco_unitario DECIMAL(10, 2) NOT NULL
     );
   `);
-  console.log('Tables created successfully');
+
+  // Verificar se a coluna 'forma_pagamento' já existe
+  const result = db.prepare(`
+    PRAGMA table_info(ordem_servico);
+  `).all();
+
+  const columnExists = result.some(column => column.name === 'forma_pagamento');
+
+  if (!columnExists) {
+    db.exec(`
+      ALTER TABLE ordem_servico
+      ADD COLUMN forma_pagamento TEXT;
+    `);
+    console.log("A coluna 'forma_pagamento' foi adicionada com sucesso.");
+  }
+  console.log("A coluna 'forma_pagamento' já existe.");
+
+  console.log('Tabelas criadas com sucesso.');
 }
+
 
 createTables();
 
@@ -249,6 +320,24 @@ exServer.put('/api/update-parts', async (req, res) => {
   }
 });
 
+exServer.delete('/api/delete-car/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deleteCarQuery = `DELETE FROM carro WHERE id = ?`;
+    const stmt = db.prepare(deleteCarQuery);
+    const info = stmt.run(id);
+
+    if (info.changes === 0) {
+      throw new Error('Nenhum carro encontrado com o ID fornecido.');
+    }
+
+    res.send({ message: 'Carro deletado com sucesso!' });
+  } catch (error) {
+    console.error("Erro ao deletar carro:", error.message);
+    res.status(500).send({ error: error.message });
+  }
+});
+
 exServer.delete('/api/delete-part/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -296,16 +385,23 @@ exServer.get('/api/parts', async (req, res) => {
 
 exServer.post('/api/save-os', async (req, res) => {
   try {
-    const { carroId, observacao, data, valorTotal, itens } = req.body;
+    const { carroId, observacao, data, valorTotal, itens, formaPagamento } = req.body;
 
-    const insertOsQuery = `INSERT INTO ordem_servico (carro_id, observacao, data, valor_total) VALUES (?, ?, ?, ?)`;
-    const osParams = [carroId, observacao, data, valorTotal];
+    // Adicionando a forma de pagamento na query de inserção
+    const insertOsQuery = `
+      INSERT INTO ordem_servico (carro_id, observacao, data, valor_total, forma_pagamento) 
+      VALUES (?, ?, ?, ?, ?)
+    `;
+    const osParams = [carroId, observacao, data, valorTotal, formaPagamento];
 
     const stmt = db.prepare(insertOsQuery);
     const info = stmt.run(...osParams);
     const ordemServicoId = info.lastInsertRowid;
 
-    const insertItemQuery = `INSERT INTO troca_peca (ordem_servico_id, nome_peca, marca_peca, quantidade, preco_unitario) VALUES (?, ?, ?, ?, ?)`;
+    const insertItemQuery = `
+      INSERT INTO troca_peca (ordem_servico_id, nome_peca, marca_peca, quantidade, preco_unitario) 
+      VALUES (?, ?, ?, ?, ?)
+    `;
 
     const itemStmt = db.prepare(insertItemQuery);
     const insertMany = db.transaction((itens) => {
@@ -321,6 +417,15 @@ exServer.post('/api/save-os', async (req, res) => {
     res.status(500).send({ error: error.message });
   }
 });
+
+exServer.get('/api/get-os', async (req, res) => {
+  try {
+    const os = db.prepare('SELECT * FROM ordem_servico').all();
+    res.json(os);
+  } catch (error) {
+    res.status(500).send({ error: error.message });
+  }
+})
 
 try {
   require('electron-reloader')(module);
@@ -471,7 +576,7 @@ app.on('activate', () => {
 });
 
 server = exServer.listen(3000, () => {
-  console.log('Express server is running on port 3000');
+  console.log('O Express Server está sendo executado na porta 3000');
 });
 
 app.on('window-all-closed', () => {
@@ -492,41 +597,11 @@ ipcMain.on('fetch-data', (event) => {
   }
 });
 
-autoUpdater.setFeedURL({
-  provider: 'github',
-  repo: 'amj-manager',
-  owner: 'Kevinhag',
-  token: process.env.GH_TOKEN,
-});
 
-autoUpdater.on('update-downloaded', () => {
-  dialog
-    .showMessageBox({
-      type: 'info',
-      title: 'Atualização Pronta',
-      message: 'Atualização baixada. Será instalado quando reiniciar o programa. Reiniciar agora?',
-      buttons: ['Sim', 'Não']
-    })
-    .then((result) => {
-      if (result.response === 0) {
-        autoUpdater.quitAndInstall(false, true);
-      }
-    });
-});
-
-autoUpdater.on('update-not-available', () => {
-  dialog.showMessageBox({
-    type: 'info',
-    title: 'Sem Atualizações',
-    message: 'Nenhuma atualização disponível.',
-    buttons: ['OK'],
-  });
-});
 
 app.on('will-quit', () => {
-  // Close express server
   if (server) {
     server.close();
-    console.log('Express server is closed');
+    console.log('O Express Server foi fechado');
   }
 });

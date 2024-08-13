@@ -3,6 +3,7 @@
 	import Notification from '$lib/Notification.svelte'; // Importe o componente de notificação
 
 	let parts = [];
+	let filteredParts = [];
 	let selectedPart = '';
 	let selectedPartData = '';
 	let name = '';
@@ -15,7 +16,7 @@
 			.then((response) => response.json())
 			.then((data) => {
 				parts = data;
-				console.log(data);
+				filteredParts = parts;  // Inicializa a lista filtrada com todas as peças
 			});
 	});
 
@@ -34,8 +35,8 @@
 		})
 			.then((response) => response.json())
 			.then((data) => {
-				console.log('Part added:', data);
 				parts = [...parts, data];
+				filteredParts = parts;  // Atualiza a lista filtrada
 				selectedPartData = null;
 				selectedPart = '';
 				name = ''; // Clear input fields
@@ -65,6 +66,7 @@
 			.then((response) => response.json())
 			.then((data) => {
 				parts = parts.map((part) => (part.id == selectedPartData.id ? updatedPart : part));
+				filteredParts = parts;  // Atualiza a lista filtrada
 				console.log('Part updated:', data);
 				selectedPartData = null;
 				selectedPart = '';
@@ -86,6 +88,7 @@
 			.then((response) => response.json())
 			.then((data) => {
 				parts = parts.filter((part) => part.id !== selectedPartData.id);
+				filteredParts = parts;  // Atualiza a lista filtrada
 				console.log('Part deleted:', data);
 				showNotification('Peça deletada com sucesso!', 'success');
 			})
@@ -99,6 +102,12 @@
 		notificationMessage = message;
 		notificationType = type;
 	}
+
+	// Função para filtrar as peças conforme o usuário digita
+	$: filteredParts = parts.filter(part => 
+		part.nome.toLowerCase().includes(name.toLowerCase()) && 
+		part.marca.toLowerCase().includes(brand.toLowerCase())
+	);
 
 	$: selectedPartData = parts.find((part) => part.id == selectedPart);
 </script>
@@ -155,7 +164,7 @@
 
 		<div class="part-list">
 			<select name="parts" id="parts" size="10" bind:value={selectedPart}>
-				{#each parts as part (part.id)}
+				{#each filteredParts as part (part.id)}
 					<option value={part.id}>
 						{part.marca}&nbsp;&nbsp; - &nbsp;&nbsp;{part.nome}
 					</option>
@@ -170,7 +179,6 @@
 </section>
 
 <style lang="scss">
-
 	input {
 		color: $maintextcolor;
 		width: 100%;
@@ -186,6 +194,7 @@
 		width: 100%;
 		justify-content: center;
 		align-items: center;
+		background-color: $bgcolor;
 
 		.title {
 			display: grid;

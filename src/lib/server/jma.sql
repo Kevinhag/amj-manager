@@ -68,6 +68,13 @@ CREATE INDEX IF NOT EXISTS idx_troca_peca_ordem_servico_id ON troca_peca (ordem_
 CREATE INDEX IF NOT EXISTS idx_troca_peca_peca_id ON troca_peca (peca_id);
 
 
+ALTER TABLE ordem_servico
+ADD COLUMN forma_pagamento TEXT;
+
+
+ALTER TABLE ordem_servico
+DROP COLUMN forma_pagamento;
+
 -- Buscar cliente por nome
 SELECT * FROM cliente WHERE nome LIKE '%Kevin%';
 
