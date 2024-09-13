@@ -1,4 +1,4 @@
-# Auto Mecanica Jorge Manager
+# AMJ Manager
 
 Aplicação para gerenciamento de uma mecanica, guardando informações de clientes e peças usadas para cada trabalho. Gera Ordem de serviço de clientes exportando para PDF.
 
