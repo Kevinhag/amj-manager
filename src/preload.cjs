@@ -5,7 +5,6 @@ contextBridge.exposeInMainWorld('electron', {
   onPDFGenerated: (callback) => ipcRenderer.on('pdf-generated', callback),
   onPDFError: (callback) => ipcRenderer.on('pdf-error', callback),
   onSavePDF: (callback) => ipcRenderer.on('save-pdf', callback),
-
   getAppVersion: () => ipcRenderer.invoke('getAppVersion'),
 
   send: (channel, data) => {
@@ -27,5 +26,4 @@ contextBridge.exposeInMainWorld('electron', {
       ipcRenderer.on(channel, (event, ...args) => func(...args));
     }
   },
-  getAppVersion: () => ipcRenderer.invoke('getAppVersion'),
 });

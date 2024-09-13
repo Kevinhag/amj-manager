@@ -2,7 +2,7 @@
 	import { onMount } from "svelte";
 
 	let td = new Date();
-
+	
 	onMount(() => {
 		const interval = setInterval(() => {
 			td = new Date();
@@ -16,6 +16,7 @@
 
 <div>
     <p>{TimeDate}</p>
+
 </div>
 
 <style>    

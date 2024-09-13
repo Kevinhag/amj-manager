@@ -1,4 +1,3 @@
-require('dotenv').config();
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const path = require('path');
@@ -6,49 +5,26 @@ const fs = require('fs');
 const express = require('express');
 const Database = require('better-sqlite3');
 const cors = require('cors');
-const packageJson = require('../package.json'); // Importa o package.json
+const packageJson = require('../package.json');
 const windowStateManager = require('electron-window-state');
 const contextMenu = require('electron-context-menu');
 const serve = require('electron-serve');
 
-// Verifique se o token está sendo carregado
-// console.log('GH_TOKEN:', process.env.GH_TOKEN);
-
-// Obtenha o diretório de dados do usuário do Electron
 const userDataPath = app.getPath('userData');
 
-// Defina a pasta onde o arquivo .db será criado
 const dbFolderPath = path.join(userDataPath, 'userdb');
 const dbPath = path.join(dbFolderPath, 'data.db');
 
-// Certifique-se de que a pasta existe
 if (!fs.existsSync(dbFolderPath)) {
   fs.mkdirSync(dbFolderPath, { recursive: true });
 }
 
-// Configurações do autoUpdater
-const token = process.env.GH_TOKEN;  // Use o token de acesso pessoal
-const repo = 'Kevinhag/amj-manager'; // Substitua pelo caminho do seu repositório (owner/repo)
-const updateURL = `https://github.com/${repo}/releases/latest/download`;
-autoUpdater.autoDownload = true;
-autoUpdater.autoInstallOnAppQuit = true;
-
-// Configure o feed URL para atualizações
-autoUpdater.setFeedURL({
-  provider: 'github',
-  repo: 'amj-manager',
-  owner: 'Kevinhag',
-  private: true,
-  token: token,
-  url: updateURL
-});
-
-autoUpdater.checkForUpdatesAndNotify();
-// Cria uma instância do servidor Express
 const exServer = express();
 exServer.use(cors());
 exServer.use(express.json());
 
+autoUpdater.autoDownload = true;
+autoUpdater.autoInstallOnAppQuit = true;
 
 autoUpdater.on('checking-for-update', () => {
   console.log('Verificando atualizações...');
@@ -60,17 +36,18 @@ autoUpdater.on('update-available', (info) => {
     type: 'info',
     title: 'Atualização disponível',
     message: 'Uma nova versão está disponível. Baixando agora...',
-    buttons: ['OK']
+    buttons: ['OK'],
   });
 });
 
-
 autoUpdater.on('update-downloaded', () => {
-  dialog.showMessageBox({
+  dialog
+    .showMessageBox({
       type: 'info',
       title: 'Atualização Pronta',
-      message: 'Atualização baixada. Será instalado quando reiniciar o programa. Reiniciar agora?',
-      buttons: ['Sim', 'Não']
+      message:
+        'Atualização baixada. Será instalado quando reiniciar o programa. Reiniciar agora?',
+      buttons: ['Sim', 'Não'],
     })
     .then((result) => {
       if (result.response === 0) {
@@ -88,14 +65,8 @@ autoUpdater.on('update-not-available', () => {
   });
 });
 
-autoUpdater.logger = require("electron-log");
-autoUpdater.logger.transports.file.level = "info";
-
-
-
 const db = new Database(dbPath);
 
-// Função para verificar se a tabela existe e criar se necessário
 function createTables() {
   db.exec(`
     CREATE TABLE IF NOT EXISTS cliente (
@@ -511,7 +482,7 @@ function createMainWindow() {
   if (dev) loadVite(port);
   else serveURL(mainWindow);
 
-  autoUpdater.checkForUpdatesAndNotify();
+  // autoUpdater.checkForUpdatesAndNotify();
 
   ipcMain.on('getAppVersion', (event) => {
     event.reply('getAppVersion', { version: packageJson.version });
@@ -568,11 +539,9 @@ function createMainWindow() {
   });
 }
 
-app.once('ready', createMainWindow);
-app.on('activate', () => {
-  if (!mainWindow) {
-    createMainWindow();
-  }
+app.once('ready', () => {
+  createMainWindow();
+  autoUpdater.checkForUpdatesAndNotify();
 });
 
 server = exServer.listen(3000, () => {
@@ -596,8 +565,6 @@ ipcMain.on('fetch-data', (event) => {
     event.reply('fetch-data-error', err.message);
   }
 });
-
-
 
 app.on('will-quit', () => {
   if (server) {

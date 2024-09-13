@@ -11,14 +11,6 @@
 		"from": "build",
 		"to": ""
 	  }
-	],
-	
-	"publish": [
-	  {
-		"provider": "github",
-		"owner": "Kevinhag",
-		"repo": "amj-manager"
-	  }
 	]
   }
   
