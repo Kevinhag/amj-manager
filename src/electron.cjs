@@ -10,7 +10,7 @@ const windowStateManager = require('electron-window-state');
 const contextMenu = require('electron-context-menu');
 const serve = require('electron-serve');
 
-const userDataPath = app.getPath('userData');
+const userDataPath = app.getPath('userData'); // %appdata%
 
 const dbFolderPath = path.join(userDataPath, 'userdb');
 const dbPath = path.join(dbFolderPath, 'data.db');
@@ -482,6 +482,174 @@ function createMainWindow() {
   if (dev) loadVite(port);
   else serveURL(mainWindow);
 
+
+  ipcMain.handle('fetch-clients', async () => {
+    try {
+      const clients = db.prepare('SELECT * FROM cliente').all();
+      return clients;
+    } catch (error) {
+      console.error('Error fetching clients:', error);
+      throw error;
+    }
+  });
+  
+  ipcMain.handle('fetch-service-orders-by-client', async (event, clientId) => {
+    try {
+      const serviceOrders = db
+        .prepare(
+          `
+          SELECT os.*, carro.modelo, carro.marca, carro.placa
+          FROM ordem_servico os
+          JOIN carro ON os.carro_id = carro.id
+          WHERE carro.cliente_id = ?
+        `
+        )
+        .all(clientId);
+  
+      // Fetch items for each OS
+      for (const os of serviceOrders) {
+        const items = db
+          .prepare('SELECT * FROM troca_peca WHERE ordem_servico_id = ?')
+          .all(os.id);
+        os.itens = items;
+      }
+  
+      return serviceOrders;
+    } catch (error) {
+      console.error('Error fetching service orders:', error);
+      throw error;
+    }
+  });
+
+
+  ipcMain.handle('fetch-report-data', async (event, reportType, params) => {
+    try {
+      let query = '';
+      let queryParams = [];
+  
+      if (reportType === 'daily') {
+        query = `
+          SELECT 
+            cliente.id AS clientId,
+            cliente.nome AS nome_cliente,
+            cliente.cpf AS cpf,
+            cliente.tel AS telefone,
+            ordem_servico.id AS osId,
+            ordem_servico.data AS data,
+            ordem_servico.valor_total AS valorTotal,
+            ordem_servico.forma_pagamento AS formaPagamento,
+            ordem_servico.observacao AS observacao,
+            carro.modelo AS carro_modelo,
+            carro.marca AS carro_marca,
+            carro.placa AS carro_placa,
+            troca_peca.id AS itemId,
+            troca_peca.nome_peca AS item_nome,
+            troca_peca.quantidade AS quantidade,
+            troca_peca.preco_unitario AS preco
+          FROM ordem_servico
+          JOIN carro ON ordem_servico.carro_id = carro.id
+          JOIN cliente ON carro.cliente_id = cliente.id
+          LEFT JOIN troca_peca ON troca_peca.ordem_servico_id = ordem_servico.id
+          WHERE DATE(ordem_servico.data) = DATE(?)
+          ORDER BY cliente.nome, ordem_servico.data
+        `;
+        queryParams = [params.date];
+      } else if (reportType === 'monthly') {
+        query = `
+          SELECT 
+            cliente.id AS clientId,
+            cliente.nome AS nome_cliente,
+            cliente.cpf AS cpf,
+            cliente.tel AS telefone,
+            ordem_servico.id AS osId,
+            ordem_servico.data AS data,
+            ordem_servico.valor_total AS valorTotal,
+            ordem_servico.forma_pagamento AS formaPagamento,
+            ordem_servico.observacao AS observacao,
+            carro.modelo AS carro_modelo,
+            carro.marca AS carro_marca,
+            carro.placa AS carro_placa,
+            troca_peca.id AS itemId,
+            troca_peca.nome_peca AS item_nome,
+            troca_peca.quantidade AS quantidade,
+            troca_peca.preco_unitario AS preco
+          FROM ordem_servico
+          JOIN carro ON ordem_servico.carro_id = carro.id
+          JOIN cliente ON carro.cliente_id = cliente.id
+          LEFT JOIN troca_peca ON troca_peca.ordem_servico_id = ordem_servico.id
+          WHERE strftime('%Y-%m', ordem_servico.data) = ?
+          ORDER BY cliente.nome, ordem_servico.data
+        `;
+        queryParams = [params.month];
+      } else if (reportType === 'annual') {
+        query = `
+          SELECT 
+            cliente.id AS clientId,
+            cliente.nome AS nome_cliente,
+            cliente.cpf AS cpf,
+            cliente.tel AS telefone,
+            ordem_servico.id AS osId,
+            ordem_servico.data AS data,
+            ordem_servico.valor_total AS valorTotal,
+            ordem_servico.forma_pagamento AS formaPagamento,
+            ordem_servico.observacao AS observacao,
+            carro.modelo AS carro_modelo,
+            carro.marca AS carro_marca,
+            carro.placa AS carro_placa,
+            troca_peca.id AS itemId,
+            troca_peca.nome_peca AS item_nome,
+            troca_peca.quantidade AS quantidade,
+            troca_peca.preco_unitario AS preco
+          FROM ordem_servico
+          JOIN carro ON ordem_servico.carro_id = carro.id
+          JOIN cliente ON carro.cliente_id = cliente.id
+          LEFT JOIN troca_peca ON troca_peca.ordem_servico_id = ordem_servico.id
+          WHERE strftime('%Y', ordem_servico.data) = ?
+          ORDER BY cliente.nome, ordem_servico.data
+        `;
+        queryParams = [params.year.toString()];
+      } else if (reportType === 'custom') {
+        query = `
+          SELECT 
+            cliente.id AS clientId,
+            cliente.nome AS nome_cliente,
+            cliente.cpf AS cpf,
+            cliente.tel AS telefone,
+            ordem_servico.id AS osId,
+            ordem_servico.data AS data,
+            ordem_servico.valor_total AS valorTotal,
+            ordem_servico.forma_pagamento AS formaPagamento,
+            ordem_servico.observacao AS observacao,
+            carro.modelo AS carro_modelo,
+            carro.marca AS carro_marca,
+            carro.placa AS carro_placa,
+            troca_peca.id AS itemId,
+            troca_peca.nome_peca AS item_nome,
+            troca_peca.quantidade AS quantidade,
+            troca_peca.preco_unitario AS preco
+          FROM ordem_servico
+          JOIN carro ON ordem_servico.carro_id = carro.id
+          JOIN cliente ON carro.cliente_id = cliente.id
+          LEFT JOIN troca_peca ON troca_peca.ordem_servico_id = ordem_servico.id
+          WHERE ordem_servico.data BETWEEN ? AND ?
+          ORDER BY cliente.nome, ordem_servico.data
+        `;
+        queryParams = [params.startDate, params.endDate];
+      } else {
+        throw new Error('Invalid report type');
+      }
+  
+      const stmt = db.prepare(query);
+      const data = stmt.all(...queryParams);
+      return data;
+    } catch (error) {
+      console.error('Error fetching report data:', error);
+      throw error;
+    }
+  });
+  
+  
+
   // autoUpdater.checkForUpdatesAndNotify();
 
   ipcMain.on('getAppVersion', (event) => {
@@ -552,7 +720,7 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });
 
-ipcMain.on('to-main', (event, count) => {
+/* ipcMain.on('to-main', (event, count) => {
   event.reply('from-main', `next count is ${count + 1}`);
 });
 
@@ -564,7 +732,7 @@ ipcMain.on('fetch-data', (event) => {
     console.error(err.message);
     event.reply('fetch-data-error', err.message);
   }
-});
+}); */
 
 app.on('will-quit', () => {
   if (server) {

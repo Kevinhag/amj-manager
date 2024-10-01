@@ -1,6 +1,6 @@
 <script>
 	import { onMount } from 'svelte';
-	import Notification from '$lib/Notification.svelte'; // Certifique-se de que o caminho está correto
+	import Notification from '$lib/components/Notification.svelte'; // Certifique-se de que o caminho está correto
 
 	let clients = [];
 	let selectedClient = '';
@@ -159,83 +159,98 @@
 	</div>
 	<div class="main">
 		<div class="client-add">
-			<div class="form-client">
-				<label for="nome">Nome</label>
-				{#if selectedClientData != null}
-					<input type="text" id="nome" bind:value={selectedClientData.nome} />
-				{:else}
-					<input type="text" id="nome" bind:value={nome} />
-				{/if}
+			<div class="form-row">
+				<div class="form-client">
+					<label for="nome">Nome</label>
+					{#if selectedClientData != null}
+						<input type="text" id="nome" bind:value={selectedClientData.nome} />
+					{:else}
+						<input type="text" id="nome" bind:value={nome} />
+					{/if}
+				</div>
+				<div class="form-client">
+					<label for="cpf">CPF</label>
+					{#if selectedClientData != null}
+						<input type="text" id="cpf" bind:value={selectedClientData.cpf} />
+					{:else}
+						<input type="text" id="cpf" bind:value={cpf} />
+					{/if}
+				</div>
 			</div>
-			<div class="form-client">
-				<label for="cpf">CPF</label>
-				{#if selectedClientData != null}
-					<input type="text" id="cpf" bind:value={selectedClientData.cpf} />
-				{:else}
-					<input type="text" id="cpf" bind:value={cpf} />
-				{/if}
+			<div class="form-row">
+				<div class="form-client">
+					<label for="endereco">Endereço</label>
+					{#if selectedClientData != null}
+						<input type="text" id="endereco" bind:value={selectedClientData.endereco} />
+					{:else}
+						<input type="text" id="endereco" bind:value={endereco} />
+					{/if}
+				</div>
+				<div class="form-client">
+					<label for="bairro">Bairro</label>
+					{#if selectedClientData != null}
+						<input type="text" id="bairro" bind:value={selectedClientData.bairro} />
+					{:else}
+						<input type="text" id="bairro" bind:value={bairro} />
+					{/if}
+				</div>
 			</div>
-			<div class="form-client">
-				<label for="endereco">Endereço</label>
-				{#if selectedClientData != null}
-					<input type="text" id="endereco" bind:value={selectedClientData.endereco} />
-				{:else}
-					<input type="text" id="endereco" bind:value={endereco} />
-				{/if}
+			<div  class="form-row">
+				<div class="form-client">
+					<label for="cidade">Cidade</label>
+					{#if selectedClientData != null}
+						<input type="text" id="cidade" bind:value={selectedClientData.cidade} />
+					{:else}
+						<input type="text" id="cidade" bind:value={cidade} />
+					{/if}
+				</div>
+				<div class="form-client">
+					<label for="numero_casa">Número</label>
+					{#if selectedClientData != null}
+						<input
+							type="text"
+							id="numero_casa"
+							bind:value={selectedClientData.numero_casa}
+						/>
+					{:else}
+						<input type="text" id="numero_casa" bind:value={numero_casa} />
+					{/if}
+				</div>
 			</div>
-			<div class="form-client">
-				<label for="bairro">Bairro</label>
-				{#if selectedClientData != null}
-					<input type="text" id="bairro" bind:value={selectedClientData.bairro} />
-				{:else}
-					<input type="text" id="bairro" bind:value={bairro} />
-				{/if}
+			<div class="form-row">
+				<div class="form-client">
+					<label for="complemento">Complemento</label>
+					{#if selectedClientData != null}
+						<input
+							type="text"
+							id="complemento"
+							bind:value={selectedClientData.complemento}
+						/>
+					{:else}
+						<input type="text" id="complemento" bind:value={complemento} />
+					{/if}
+				</div>
+				<div class="form-client">
+					<label for="tel">Telefone</label>
+					{#if selectedClientData != null}
+						<input type="text" id="tel" bind:value={selectedClientData.tel} />
+					{:else}
+						<input type="text" id="tel" bind:value={tel} />
+					{/if}
+				</div>
 			</div>
-			<div class="form-client">
-				<label for="cidade">Cidade</label>
-				{#if selectedClientData != null}
-					<input type="text" id="cidade" bind:value={selectedClientData.cidade} />
-				{:else}
-					<input type="text" id="cidade" bind:value={cidade} />
-				{/if}
+
+			<div class="form-row">
+				<div class="form-client">
+					<label for="tel2">Telefone 2</label>
+					{#if selectedClientData != null}
+						<input type="text" id="tel2" bind:value={selectedClientData.tel2} />
+					{:else}
+						<input type="text" id="tel2" bind:value={tel2} />
+					{/if}
+				</div>
 			</div>
-			<div class="form-client">
-				<label for="numero_casa">Número</label>
-				{#if selectedClientData != null}
-					<input type="text" id="numero_casa" bind:value={selectedClientData.numero_casa}	/>
-				{:else}
-					<input type="text" id="numero_casa" bind:value={numero_casa} />
-				{/if}
-			</div>
-			<div class="form-client">
-				<label for="complemento">Complemento</label>
-				{#if selectedClientData != null}
-					<input
-						type="text"
-						id="complemento"
-						bind:value={selectedClientData.complemento}
-					/>
-				{:else}
-					<input type="text" id="complemento" bind:value={complemento} />
-				{/if}
-			</div>
-			<div class="form-client">
-				<label for="tel">Telefone</label>
-				{#if selectedClientData != null}
-					<input type="text" id="tel" bind:value={selectedClientData.tel} />
-				{:else}
-					<input type="text" id="tel" bind:value={tel} />
-				{/if}
-			</div>
-			<div class="form-client">
-				<label for="tel2">Telefone 2</label>
-				{#if selectedClientData != null}
-					<input type="text" id="tel2" bind:value={selectedClientData.tel2} />
-				{:else}
-					<input type="text" id="tel2" bind:value={tel2} />
-				{/if}
-			</div>
-			<div>
+			<div class="form-buttons">
 				{#if selectedClientData}
 					<button type="button" on:click={updateClient}>Alterar Cliente</button>
 					<button type="button" on:click={() => deleteClient(selectedClientData)}>
@@ -267,13 +282,15 @@
 </section>
 
 <style lang="scss">
-
+	@import 'src/lib/styles/buttons.scss';
+	@import 'src/lib/styles/input.scss';
+	@import 'src/lib/styles/select.scss';
 	input {
 		color: $maintextcolor;
 		width: 100%;
 		padding: 5px;
 		border-radius: 5px;
-		border: 1px solid #cccccc33;
+		border: 1px solid $bordercolor;
 	}
 
 	section {
@@ -317,7 +334,7 @@
 				flex-direction: column;
 				justify-content: center;
 				height: 100%;
-				border: 1px solid #cccccc33;
+				border: 1px solid $bordercolor;
 				border-radius: 10px;
 				select {
 					height: 100%;
@@ -325,31 +342,40 @@
 				}
 			}
 			.client-add {
-				display: flex;
-				justify-content: center;
-				align-items: center;
-				background-color: #44444433;
+				display: grid;
+				grid-template-rows: repeat(6, 1fr);
+				align-self: center; 
+				background-color: $bgcolor;
 				flex-wrap: wrap;
 				width: 100%;
-				height: 100%;
-				gap: 10px;
 				padding: 20px;
-				border: 1px solid #cccccc33;
+				border: 1px solid $bordercolor;
 				border-radius: 10px;
 
-				.form-client {
-					width: 40%;
-					display: flex;
-					flex-direction: column;
-					gap: 5px;
+				.form-row {
+					display: grid;
+					grid-template-columns: repeat(2, 1fr);
+					gap: 10px;
 
-					input {
-						font: 700 14px 'Roboto Mono', Arial, sans-serif;
-						padding: 5px;
-						border-radius: 5px;
-						border: 1px solid #cccccc33;
+					.form-client {
+						width: 100%;
+						height: 80%;
+						display: flex;
+						flex-direction: row;
+						flex-wrap: wrap;
+						input {
+							padding: 5px;
+							border-radius: 5px;
+							border: 1px solid $bordercolor;
+						}
 					}
 				}
+				.form-buttons {
+					display: flex;
+					justify-content: space-around;
+					align-items: center;
+				}
+
 			}
 		}
 	}

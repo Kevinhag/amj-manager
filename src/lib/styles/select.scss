@@ -1,0 +1,42 @@
+
+select {
+	overflow: hidden;
+	overflow-y: auto;
+	border-radius: 5px;
+	height: 30px;
+	border: 1px solid $bordercolor;
+
+	&::-webkit-scrollbar {
+		width: 15px;
+	}
+	&::-webkit-scrollbar-track {
+		background: #33333333;
+	}
+	&::-webkit-scrollbar-thumb {
+		background: #888;
+		border-radius: 0 10px 10px 0;
+
+		&:hover {
+			background: #555;
+		}
+	}
+
+	option {
+		transition: 100ms;
+		width: 100%;
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		justify-content: space-between;
+		align-items: center;
+		padding-left: 20px;
+		background-color: $bgcolor;
+		width: 100%;
+		height: 30px;
+		&:nth-child(even) {
+			background-color: #33333333;
+		}
+		&:hover {
+			background-color: $darkerhover;
+		}
+	}
+}

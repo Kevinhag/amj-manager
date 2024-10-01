@@ -1,4 +1,10 @@
 <script lang="ts">
+	import { createEventDispatcher } from 'svelte';
+	import { onMount } from 'svelte';
+	// import { dndzone } from "svelte-dnd-action";
+
+	const dispatch = createEventDispatcher();
+
 	export let list: Array<{ key: string; nome: string; quantidade: number; preco: number }> = [];
 	export let update = (v: any) => {};
 
@@ -10,7 +16,7 @@
 
 	function comparePosition(y: number, e: Element) {
 		if (!e) return;
-		if (e.classList.contains("locked")) return;
+		if (e.classList.contains('locked')) return;
 		const rect = e.getBoundingClientRect();
 		if (y > rect.top && y < rect.bottom) {
 			if (y < rect.top + rect.height * 0.5) {
@@ -24,10 +30,10 @@
 	}
 
 	async function pickItem(e: any, touch = false) {
-		e.dataTransfer.setData("text/plain", "");
+		e.dataTransfer.setData('text/plain', '');
 		picked = e.target;
 
-		marker.style.visibility = "visible";
+		marker.style.visibility = 'visible';
 		comparePosition(e.clientY, picked);
 		container.insertBefore(marker, direction > 0 ? picked.nextSibling : picked);
 	}
@@ -35,7 +41,7 @@
 	function moveItem(e: any, touch = false) {
 		e.preventDefault();
 		const y = touch && e.touches.length == 1 ? e.touches[0].clientY : e.clientY;
-		const elements = container.querySelectorAll(".item");
+		const elements = container.querySelectorAll('.item');
 		elements.forEach((element) => {
 			comparePosition(y, element);
 		});
@@ -43,13 +49,13 @@
 	}
 
 	function dropItem() {
-		if (picked && !picked.classList.contains("locked") && target) {
+		if (picked && !picked.classList.contains('locked') && target) {
 			reorderItems();
 		}
 		picked = null;
 		target = null;
 		direction = 0;
-		marker.style.visibility = "hidden";
+		marker.style.visibility = 'hidden';
 	}
 
 	function reorderItems() {
@@ -103,42 +109,84 @@
 	}
 
 	function currencyFormat(currency: number) {
-		return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(currency);
+		return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
+			currency,
+		);
 	}
-
 </script>
 
-<div class="container component" on:dragover={moveItem} on:dragend={dropItem} on:touchmove={(e) => moveItem(e, true)} on:touchend={dropItem}>
+<div
+	class="container component"
+	on:dragover={moveItem}
+	on:dragend={dropItem}
+	on:touchmove={(e) => moveItem(e, true)}
+	on:touchend={dropItem}
+>
 	<div class="list" bind:this={container}>
 		<div bind:this={marker} class="marker" />
 
 		{#each list as item, i}
-			<div class="item" draggable={false} id={item.key} on:dragstart|self={pickItem} on:touchstart|self={(e) => pickItem(e, true)}>
+		
+			<div
+				class="item"
+				draggable={false}
+				id={item.key}
+				on:dragstart|self={pickItem}
+				on:touchstart|self={(e) => pickItem(e, true)}
+			>
+				<div>#{i + 1}</div>
 				<div class="text" title="Edit">{item.nome}</div>
-				<input type="number" name="quantity" id="quantity" min="1" value={item.quantidade} on:input={(e) => updateQuantity(i, +e.target.value)} />
-				<input type="text" name="price" id="price" min="0" step="10" value={currencyFormat(item.preco)} on:input={(e) => updatePrice(i, e.target.value)} />
-				<input type="text" name="totalprice" id="totalprice" readonly value={currencyFormat(getTotal(item))} />
+
+				<input
+					type="number"
+					name="quantity"
+					id="quantity"
+					min="1"
+					value={item.quantidade}
+					on:input={(e) => updateQuantity(i, +e.target.value)}
+				/>
+				<input
+					type="text"
+					name="price"
+					id="price"
+					min="0"
+					step="10"
+					value={currencyFormat(item.preco)}
+					on:input={(e) => updatePrice(i, e.target.value)}
+				/>
+				<input
+					type="text"
+					name="totalprice"
+					id="totalprice"
+					readonly
+					value={currencyFormat(getTotal(item))}
+				/>
 				<button on:click={() => RemoveItem(i)}>DEL</button>
 			</div>
 		{/each}
-		<div>
-			<div class="item locked">
-				<div class="text">Total</div>
-				<div></div>
-				<div></div>
-				<div></div>
-				<div class="text">{currencyFormat(list.reduce((acc, item) => acc + getTotal(item), 0))}</div>
-			</div>
-		</div>
 	</div>
 </div>
+<!-- <div>
+	<div class="item locked">
+		<div class="text">Total</div>
+		<div />
+		<div />
+		<div />
+		<div class="text">
+			{currencyFormat(list.reduce((acc, item) => acc + getTotal(item), 0))}
+		</div>
+	</div>
+</div> -->
 
-<style>
+<style lang="scss">
+	@import 'src/lib/styles/buttons.scss';
 	div {
 		box-sizing: border-box;
 	}
 
-	.container.component {
+	.container,
+	.component {
+		height: auto;
 		padding: 0px;
 		font-size: 100%;
 	}
@@ -148,7 +196,14 @@
 		padding: 2px;
 	}
 
-	input[type="text"], input[type="number"] {
+	button {
+		height: 30px;
+		padding: 0;
+		width: auto;
+		margin-top: 0;
+	}
+	input[type='text'],
+	input[type='number'] {
 		margin: 0px;
 		padding: 0px;
 		width: 100%;
@@ -156,12 +211,12 @@
 		border: none;
 		text-align: center;
 		border-radius: 5px;
+		border: 1px solid $bordercolor;
 	}
 
 	.item {
 		display: grid;
-		grid-template-columns: auto 40px 90px 60px auto;
-
+		grid-template-columns: 3% 40% 10% 15% 15% 10%;
 		user-select: none;
 		gap: 5px;
 		width: 100%;
@@ -171,23 +226,15 @@
 		font-size: 90%;
 	}
 
-	.item.locked {
+/* 	.item.locked {
 		background: #60606010;
-	}
-
-	[draggable="true"] {
-		cursor: grab;
-	}
+	} */
 
 	.item div {
 		width: 100%;
 		height: 100%;
 		display: flex;
 		align-items: center;
-	}
-
-	.center {
-		justify-content: center;
 	}
 
 	.text {
@@ -198,8 +245,6 @@
 	.item:not(.locked):hover {
 		background: var(--component-bg-hover);
 	}
-
-
 
 	.marker {
 		left: 0px;

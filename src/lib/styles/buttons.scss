@@ -1,0 +1,31 @@
+@import 'variables.scss';
+
+button {
+	cursor: pointer;
+	width: 170px;
+	border: none;
+	background: none;
+	color: $maintextcolor;
+	font-size: 1rem;
+	padding: 10px 20px;
+	margin-top: 10px;
+	border-radius: 5px;
+	background-color: $darker;
+	transition: $transition;
+	border: 1px solid $bordercolor;
+
+/* 	&[disabled] {
+		background-color: #cccccc33;
+		color: grey;
+		cursor: default;
+		&:hover {
+			background-color: #cccccc33;
+			color: grey;
+		}
+	} */
+
+	&:hover {
+		background-color: $color2;
+		color: $bgcolor;
+	}
+}

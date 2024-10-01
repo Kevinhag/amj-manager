@@ -1,9 +1,9 @@
 <script>
 	import { onMount } from 'svelte';
-	import Notification from '$lib/Notification.svelte';
-	import ConfirmDialog from '$lib/ConfirmDialog.svelte';
-	import Reorderable from '$lib/Reorderable.svelte';
-	import AddPart from '$lib/AddPart.svelte';
+	import Notification from '$lib/components/Notification.svelte';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+	import Reorderable from '$lib/components/Reorderable.svelte';
+	import AddPart from '$lib/components/AddPart.svelte';
 
 	let osItemList = [];
 	let parts = [];
@@ -37,19 +37,19 @@
 		showAddPart = false;
 		fetchData();
 	}
-	$: selectedPag = 0;
 
+	$: selectedPag = 0;
+	$: totalValue = addedParts.reduce((sum, item) => sum + getTotal(item), 0);
 	$: selectedPartData = parts.find((part) => part.id == selectedPart);
 	$: selectedCarData = cars.find((car) => car.id == selectedCar);
 	$: selectedClientData = clients.find((client) => client.id == selectedClient);
-
 	$: filteredClients = clients.filter(
 		(client) =>
 			client.nome.toLowerCase().includes(searchQuery) ||
 			client.cpf.toLowerCase().includes(searchQuery) ||
 			client.tel.toLowerCase().includes(searchQuery) ||
 			client.tel2.toLowerCase().includes(searchQuery),
-			// inserir filtro pela placa do carro do cliente
+		// inserir filtro pela placa do carro do cliente
 	);
 	$: filteredParts = parts.filter(
 		(part) =>
@@ -102,7 +102,10 @@
 					carroId: selectedCarData.id,
 					observacao,
 					data: new Date().toISOString(),
-					valorTotal: addedParts.reduce((total, part) => total + part.quantidade * part.preco, 0),
+					valorTotal: addedParts.reduce(
+						(total, part) => total + part.quantidade * part.preco,
+						0,
+					),
 					itens: addedParts,
 					formaPagamento: formaPagCompleta,
 				};
@@ -168,8 +171,6 @@
 		if (formaPagamento === 'Crédito parcelado' || formaPagamento === 'Parcelado') {
 			formaPagCompleta += ` em ${parcelas}`;
 		}
-
-
 
 		return `
 		<html lang="pt-BR">
@@ -282,6 +283,17 @@
 		showConfirmDialog = false;
 	}
 
+	function getTotal(item) {
+		return item.quantidade * item.preco;
+	}
+
+	function currencyFormat(value) {
+		return new Intl.NumberFormat('pt-BR', {
+			style: 'currency',
+			currency: 'BRL',
+		}).format(value);
+	}
+
 	window.electron.onSavePDF(() => {
 		const content = pageOS();
 		window.electron.printToPDF(content);
@@ -290,22 +302,18 @@
 
 <section>
 	<div class="form-main">
-
 		{#if showAddPart}
-        <!-- Modal Overlay -->
 			<!-- svelte-ignore a11y-click-events-have-key-events -->
 			<div class="modal-overlay" on:click={closeAddPart}>
 				<div class="modal-content" on:click|stopPropagation>
-					<!-- Componente AddPart -->
 					<AddPart />
-					<!-- Botão para fechar o modal -->
 					<button on:click={closeAddPart}>Fechar</button>
 				</div>
 			</div>
 		{/if}
 
 		<!-- Clientes -->
-		<div class="form-client" class:active-border={selectedClient !== ''}>
+		<div class="form-client" class:active-border={selectedClient}>
 			<h2>Clientes:</h2>
 			<input
 				type="text"
@@ -338,7 +346,7 @@
 		</div>
 
 		<!-- Carros -->
-		<div class="form-car" class:active-border={selectedCar !== ''}>
+		<div class="form-car" class:active-border={selectedCar}>
 			<h2>Carros:</h2>
 			<div class="form-details">
 				<select name="cars" id="cars" size="4" bind:value={selectedCar}>
@@ -378,7 +386,7 @@
 				placeholder="Pesquisar Peças:"
 				on:input={handlePartSearch}
 			/>
-			
+
 			<select name="parts" id="parts" size="4" bind:value={selectedPart}>
 				{#each filteredParts as part (part.id)}
 					<option value={part.id}>
@@ -395,52 +403,60 @@
 
 	<div class="form-main">
 		<!-- Ordem de Serviço -->
-		<div class="os-part-list">
-			<h2 class="grid-item">Ordem de Serviço:</h2>
-			<div class="reorderable-container grid-item">
-				<Reorderable bind:list={addedParts} update={(value) => (addedParts = value)} />
-			</div>
-			
-			<div class="grid-item">
-				<div>
-					<label for="form-pag">Forma de pagamento:</label>
-					<select name="form-pag" id="form-pag" bind:value={formaPagamento}>
-						<option value="" disabled selected hidden>Selecione a forma de pagamento</option>
-						<option value="Crédito á vista">Crédito á vista</option>
-						<option value="Crédito parcelado">Crédito parcelado</option>
-						<option value="Débito">Débito</option>
-						<option value="Á vista">Á vista</option>
-						<option value="Parcelado">Parcelado</option>
-					</select>
-					{#if formaPagamento === 'Crédito parcelado' || formaPagamento === 'Parcelado'}
-					<select name="pag-x" id="pag-x" bind:value={parcelas}>
-						<option value="1x" selected>1x</option>
-						<option value="2x">2x</option>
-						<option value="3x">3x</option>
-						<option value="4x">4x</option>
-						<option value="5x">5x</option>
-						<option value="6x">6x</option>
-						<option value="7x">7x</option>
-						<option value="8x">8x</option>
-						<option value="9x">9x</option>
-						<option value="10x">10x</option>
-						<option value="11x">11x</option>
-						<option value="12x">12x</option>
-					</select>
-					{/if}
+		<div class="os-part-list" class:active-border={addedParts.length !== 0 && selectedClient && selectedCar}>
+			<h2>Ordem de Serviço:</h2>
+			<div class="os-container">
+				<div class="reorderable-container">
+					<Reorderable bind:list={addedParts} update={(value) => (addedParts = value)} />
 				</div>
 
-				<textarea
-					rows="4"
-					cols="50"
-					placeholder="Observações"
-					bind:value={observacao}
-					style="resize: none;"
-				/>
-				<div class="item">
-				<button type="button" on:click={openPopup}>Visualizar</button>
-				<button type="button" on:click={saveAsPDF}>Exportar PDF</button>
-				<button type="button" on:click={saveOrder}>Finalizar</button>
+				<div class="total-container">
+					<div>Total: {currencyFormat(totalValue)}</div>
+				</div>
+
+				<div>
+					<div>
+						<label for="form-pag">Forma de pagamento:</label>
+						<select name="form-pag" id="form-pag" bind:value={formaPagamento}>
+							<option value="" disabled selected hidden>
+								Selecione a forma de pagamento
+							</option>
+							<option value="Crédito á vista">Crédito á vista</option>
+							<option value="Crédito parcelado">Crédito parcelado</option>
+							<option value="Débito">Débito</option>
+							<option value="Á vista">Á vista</option>
+							<option value="Parcelado">Parcelado</option>
+						</select>
+						{#if formaPagamento === 'Crédito parcelado' || formaPagamento === 'Parcelado'}
+							<select name="pag-x" id="pag-x" bind:value={parcelas}>
+								<option value="1x" selected>1x</option>
+								<option value="2x">2x</option>
+								<option value="3x">3x</option>
+								<option value="4x">4x</option>
+								<option value="5x">5x</option>
+								<option value="6x">6x</option>
+								<option value="7x">7x</option>
+								<option value="8x">8x</option>
+								<option value="9x">9x</option>
+								<option value="10x">10x</option>
+								<option value="11x">11x</option>
+								<option value="12x">12x</option>
+							</select>
+						{/if}
+					</div>
+
+					<textarea
+						rows="4"
+						cols="50"
+						placeholder="Observações"
+						bind:value={observacao}
+						style="resize: none;"
+					/>
+					<div class="item">
+						<button type="button" on:click={openPopup}>Visualizar</button>
+						<button type="button" on:click={saveAsPDF}>Exportar PDF</button>
+						<button type="button" on:click={saveOrder}>Finalizar</button>
+					</div>
 				</div>
 			</div>
 			{#if message}
@@ -460,6 +476,11 @@
 </section>
 
 <style lang="scss">
+	@import 'src/lib/styles/buttons.scss';
+	@import 'src/lib/styles/input.scss';
+	@import 'src/lib/styles/select.scss';
+
+	/* Estilos da Seção Principal */
 	section {
 		display: grid;
 		grid-template-columns: repeat(3, 1fr);
@@ -467,107 +488,96 @@
 		width: 100%;
 		height: 100%;
 		padding: 10px;
-		// background-color: #282828;
 		color: #ffffff;
-		font-family: 'Arial', sans-serif;
+
+		.form-main {
+			display: flex;
+			flex-direction: column;
+			height: 100%;
+			gap: 10px;
+
+			.form-client,
+			.form-car {
+				background-color: $bgcolorl;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				justify-content: center;
+				border-radius: 10px;
+				border: 1px solid #555;
+				gap: 10px;
+				padding: 10px;
+				height: 100%;
+				width: 100%;
+
+				&.active-border {
+					border: 1px solid $color2;
+				}
+
+				.form-details {
+					display: flex;
+					flex-direction: row;
+					align-items: center;
+					justify-content: center;
+					gap: 10px;
+					width: 100%;
+					height: 100%;
+
+					.form-details-vis {
+						display: flex;
+						width: 80%;
+						height: 100%;
+						flex-direction: column;
+						align-items: flex-start;
+						justify-content: center;
+						padding: 10px;
+						gap: 5px;
+						border: 1px solid $bordercolor;
+						border-radius: $radius;
+						overflow-y: auto;
+						min-height: 28vh;
+						max-height: 28vh;
+						background-color: $darker;
+					}
+				}
+			}
+
+			.modal-overlay {
+				position: fixed;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				background: rgba(0, 0, 0, 0.4);
+				backdrop-filter: blur(2px);
+				display: flex;
+				justify-content: center;
+				align-items: center;
+			}
+
+			.modal-content {
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				justify-content: center;
+				width: 80%;
+				background: $bgcolor;
+				padding: 20px;
+				border-radius: 20px;
+				border: 1px solid $color2;
+			}
+		}
 	}
 
-	#form-pag, #pag-x {
-		width: 78.5%;
-		height: 30px;
-		background-color: #444;
-		color: #ffffff;
-		border: 1px solid #555;
-		border-radius: 5px;
-		margin-bottom: 10px;
-	}
-
-	#pag-x {
-		width: 20%;
-	}
-
-	.modal-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.4);
-		backdrop-filter: blur(2px);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-
-    .modal-content {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-
-		width: 80%;
-        background: $bgcolor;
-        padding: 20px;
-        border-radius: 20px;
-		border: 1px solid $color2;
-    }
-
-	.text {
-		padding: 0 5px 0 10px;
-		border-radius: 5px;
-		font-size: 1.5rem;
-		font-weight: bold;
-		background-color: #444;
-		width: 15px;
-	}
-
-	.form-client,
-	.form-car {
-		background-color: #44444433;
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		border-radius: 10px;
-		border: 1px solid #555;
-		gap: 10px;
-		padding: 10px;
-		height: 100%;
-		width: 100%;
-	}
-
-	.form-details {
-		display: flex;
-		flex-direction: row;
-		align-items: center;
-		justify-content: center;
-		gap: 10px;
-		width: 100%;
-		height: 100%;
-	}
-
-	.form-details-vis {
-		display: flex;
-		width: 80%;
-		flex-direction: column;
-		align-items: start;
-		justify-content: center;
-		gap: 5px;
-		border-radius: 5px;
-		overflow-y: auto;
-		min-height: 28vh;
-		max-height: 28vh;
-		background-color: $darker;
-	}
-
+	/* Estilos da Lista de Peças e OS */
 	.part-list,
-	.form-base,
-	.os-part-list {
-		background-color: #44444433;
+	.form-base {
+		background-color: $bgcolorl;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
+
 		border-radius: 10px;
 		border: 1px solid #555;
 		gap: 10px;
@@ -578,26 +588,54 @@
 
 	.os-part-list {
 		display: grid;
-		grid-template-rows: 40px 1fr 240px;
-		// background-color: purple;
-	}
-
-	.form-main {
-		display: flex;
-		flex-direction: column;
-		// background-color: aqua;
-		height: 100%;
+		grid-template-rows: 40px 1fr;
 		gap: 10px;
+		background-color: $bgcolorl;
+		height: 100%;
+		border-radius: 10px;
+		border: 1px solid $bordercolor;
+		padding: 10px;
+
+		h2 {
+			text-align: center;
+			color: $maintextcolor;
+		}
+
+		.os-container {
+			display: grid;
+			grid-template-rows: 1fr 50px 200px;
+
+			.reorderable-container {
+				overflow-y: scroll;
+				width: 100%;
+				max-height: calc(35vh);
+			}
+
+			.total-container {
+				display: flex;
+				justify-content: flex-end;
+				align-items: center;
+				padding: 0 10px;
+				font-size: 1.5rem;
+				font-weight: bold;
+				color: $maintextcolor;
+			}
+		}
 	}
 
-	.grid-item{
-		justify-self: center;
+	#form-pag,
+	#pag-x {
+		height: 30px;
+		color: $maintextcolor;
+		margin-bottom: 10px;
 	}
-	
-	.reorderable-container {
-		overflow-y: auto;
-		width: 100%;
-		max-height: 35vh; /* Define a altura máxima conforme necessário */
+
+	#form-pag {
+		width: 78.5%;
+	}
+
+	#pag-x {
+		width: 20%;
 	}
 
 	#clients,
@@ -605,59 +643,9 @@
 	#parts {
 		width: 100%;
 		height: 100%;
-		background-color: #444;
-		color: #ffffff;
-		border: 1px solid #555;
-		border-radius: 5px;
 	}
 
-	#clients {
-		height: 100%;
-	}
-
-	#cars {
-		height: 100%;
-	}
-
-	#parts {
-		height: 100%;
-	}
-
-	.notification {
-		position: absolute;
-		top: 50px;
-		right: 20px;
-		padding: 10px;
-		border-radius: 8px;
-		color: #fff;
-		background-color: #333;
-	}
-	.info {
-		background-color: #5555b9;
-		box-shadow: 0 0 20px #5555b9;
-	}
-	.error {
-		background-color: #9b1b1b;
-		box-shadow: 0 0 20px #9b1b1b;
-	}
-	.success {
-		background-color: #256d25;
-		box-shadow: 0 0 20px #256d25;
-	}
-
-	.add-part {
-		background-color: #282828;
-		color: #ffffff;
-		border: 1px solid #555;
-		padding: 10px 20px;
-		border-radius: 5px;
-		cursor: pointer;
-	}
-
-	.add-part:hover {
-		background-color: #444;
-	}
-
+	/* Estilos do Textarea */
 	textarea {
 		background-color: #444;
 		color: #ffffff;
@@ -668,21 +656,61 @@
 		resize: none;
 	}
 
-/* 	button {
-		background-color: #282828;
+	/* Estilos das Notificações */
+	.notification {
+		position: absolute;
+		top: 50px;
+		right: 20px;
+		padding: 10px;
+		border-radius: 8px;
+		color: #fff;
+		background-color: #333;
+	}
+
+	.info {
+		background-color: #5555b9;
+		box-shadow: 0 0 20px #5555b9;
+	}
+
+	.error {
+		background-color: #9b1b1b;
+		box-shadow: 0 0 20px #9b1b1b;
+	}
+
+	.success {
+		background-color: #256d25;
+		box-shadow: 0 0 20px #256d25;
+	}
+
+	/* Estilos do Botão 'Adicionar Peça' */
+	.add-part {
+		background-color: $color;
 		color: #ffffff;
 		border: 1px solid #555;
 		padding: 10px 20px;
 		border-radius: 5px;
 		cursor: pointer;
-		margin-top: 10px;
+		&:hover {
+			background-color: $color2;
+		}
 	}
 
-	button:hover {
+	.add-part:hover {
 		background-color: #444;
-	} */
+	}
 
+	/* Estilo da Classe 'active-border' */
 	.active-border {
 		border: 1px solid $color2;
+	}
+
+	/* Estilos Adicionais */
+	.text {
+		padding: 0 5px 0 10px;
+		border-radius: 5px;
+		font-size: 1.5rem;
+		font-weight: bold;
+		background-color: #444;
+		width: 15px;
 	}
 </style>

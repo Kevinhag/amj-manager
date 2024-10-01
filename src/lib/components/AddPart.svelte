@@ -1,6 +1,6 @@
 <script>
 	import { onMount } from 'svelte';
-	import Notification from '$lib/Notification.svelte'; // Importe o componente de notificação
+	import Notification from '$lib/components/Notification.svelte'; // Importe o componente de notificação
 
 	let parts = [];
 	let filteredParts = [];
@@ -179,6 +179,9 @@
 </section>
 
 <style lang="scss">
+	@import 'src/lib/styles/buttons.scss';
+	@import 'src/lib/styles/input.scss';
+	@import 'src/lib/styles/select.scss';
 	input {
 		color: $maintextcolor;
 		width: 100%;

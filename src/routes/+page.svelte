@@ -1,6 +1,6 @@
 <script>
 	import { browser } from '$app/environment';
-	import AddPart from '$lib/AddCar.svelte';
+	import AddPart from '$lib/components/AddCar.svelte';
 
 	let desktop;
 	let showPartsPopup = false;
@@ -32,13 +32,14 @@
 
 <div class="main-selector">
 	<a href="/clients" class="selector-box add-client"> </a>
-	<a href="/os" class="selector-box os"></a>
+	<a href="/os" class="selector-box os"> </a>
 	<!-- <option on:click={openPartsPopup} class="selector-box add-parts">Adicionar Peças</option> -->
-	<a href="/parts" class="selector-box add-parts"></a>
-	<a href="/report" class="selector-box report disabled"> </a>
+	<a href="/parts" class="selector-box add-parts"> </a>
+	<a href="/report" class="selector-box report"> </a>
 </div>
 
 <style lang="scss">
+	// @import '../lib/styles/global.scss';
 	.main-selector {
 		display: flex;
 		align-items: center;
@@ -177,7 +178,7 @@
 			background-image: url('../assets/client_bg.webp');
 			background-position: center;
 			opacity: 0.5;
-			transition: opacity 0.25s ease; /* Transição suave para a opacidade */
+			transition: opacity 0.25s ease;
 		}
 
 		&::after {
@@ -218,10 +219,33 @@
 			opacity: 0.5;
 		}
 
-		&.disabled {
+		&::after {
+			position: absolute;
+			align-items: center;
+			width: 100%;
+			height: 0;
+			content: 'RELATÓRIOS';
+			font-size: 20pt;
+			font: 700 20pt 'Roboto Condensed', Arial, sans-serif;
+			background-color: #00000055;
+			color: white;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			overflow: hidden;
+			transition: height 0.25s ease;
+		}
+		&:hover {
+			background-color: $color2;
+
+			&::after {
+				height: 30%;
+			}
+		}
+		/* 		&.disabled {
 			pointer-events: none;
 			opacity: 0.5;
 			border: 1px solid grey;
-		}
+		} */
 	}
 </style>

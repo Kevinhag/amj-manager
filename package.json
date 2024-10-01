@@ -1,6 +1,6 @@
 {
 	"name": "amj-manager",
-	"version": "0.1.4",
+	"version": "0.1.5",
 	"description": "AMJ Electron App.",
 	"main": "src/electron.cjs",
 	"type": "module",
@@ -29,7 +29,7 @@
 		"Chrome 89"
 	],
 	"dependencies": {
-		"better-sqlite3": "^11.1.2",
+		"better-sqlite3": "^11.3.0",
 		"cors": "^2.8.5",
 		"dotenv": "^16.4.5",
 		"electron-context-menu": "^3.6.1",

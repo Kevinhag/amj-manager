@@ -12,7 +12,7 @@
 {#if isVisible}
 	<div class="notification {type}">
 		{message}
-		<span class="close" on:click={close}>✖</span>
+		<span class="close" on:click={close} on:keydown={close}>✖</span>
 	</div>
 {/if}
 
@@ -26,6 +26,7 @@
 		color: $maintextcolor;
 		background-color: #333;
 	}
+
 	.info {
 		background-color: #5555b9;
 		box-shadow: 0 0 20px #5555b9;
