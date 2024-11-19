@@ -3,7 +3,7 @@
 	import { format, parseISO } from 'date-fns';
 	import Notification from '$lib/components/Notification.svelte';
   
-	let reportType = 'daily'; // 'daily', 'monthly', 'annual', 'custom'
+	let reportType = 'daily'; // 'daily', 'monthly', 'annual', 'custom', 'client'
 	let selectedDate = '';
 	let selectedMonth = '';
 	let selectedYear = new Date().getFullYear();
@@ -13,14 +13,29 @@
 	let isLoading = false;
 	let message = '';
 	let type = 'info'; // 'info', 'error', 'success'
+	let clients = [];
+	let selectedClientId = null;
   
-	onMount(() => {
-	  // Inicializa as datas
+	onMount(async () => {
+	  // Initialize dates
 	  const today = new Date();
 	  selectedDate = today.toISOString().split('T')[0];
 	  selectedMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
 	  startDate = selectedDate;
 	  endDate = selectedDate;
+  
+	  // Fetch clients
+	  if (window.electron) {
+		try {
+		  clients = await window.electron.fetchClients();
+		  if (clients.length > 0) {
+			selectedClientId = clients[0].id;
+		  }
+		} catch (error) {
+		  console.error('Error fetching clients:', error);
+		  showNotification('Erro ao carregar clientes: ' + error.message, 'error');
+		}
+	  }
 	});
   
 	async function generateReport() {
@@ -28,13 +43,16 @@
 	  reportData = [];
 	  try {
 		if (window.electron) {
-		  const data = await window.electron.fetchReportData(reportType, {
+		  const requestData = {
 			date: selectedDate,
 			month: selectedMonth,
 			year: selectedYear,
 			startDate,
 			endDate,
-		  });
+			clientId: selectedClientId,
+		  };
+  
+		  const data = await window.electron.fetchReportData(reportType, requestData);
   
 		  reportData = groupDataByClient(data);
   
@@ -96,7 +114,6 @@
 		}
 	  });
   
-	  // Converte os objetos em arrays
 	  return Object.values(clientMap).map((client) => {
 		client.osList = Object.values(client.osList);
 		return client;
@@ -201,6 +218,9 @@
 		  return `Anual - ${selectedYear}`;
 		case 'custom':
 		  return `De ${formatDate(startDate)} até ${formatDate(endDate)}`;
+		case 'client':
+		  const selectedClient = clients.find(client => client.id === selectedClientId);
+		  return `Cliente - ${selectedClient ? selectedClient.nome : ''}`;
 		default:
 		  return '';
 	  }
@@ -249,6 +269,10 @@
 		  <input type="radio" name="reportType" value="custom" bind:group={reportType} />
 		  Personalizado
 		</label>
+		<label>
+		  <input type="radio" name="reportType" value="client" bind:group={reportType} />
+		  Cliente
+		</label>
 	  </div>
   
 	  <div class="date-inputs">
@@ -282,6 +306,17 @@
 			  <input type="date" id="end-date" bind:value={endDate} />
 			</label>
 		  </div>
+		{/if}
+  
+		{#if reportType === 'client'}
+		  <label for="client-select">Cliente:</label>
+		  <select id="client-select" bind:value={selectedClientId}>
+			{#each clients as client (client.id)}
+			  <option value={client.id}>
+				{client.nome}
+			  </option>
+			{/each}
+		  </select>
 		{/if}
 	  </div>
   
@@ -353,7 +388,7 @@
   </section>
   
   <style lang="scss">
-	/* Importa seus estilos globais ou variáveis, se necessário */
+	/* Import your global styles or variables if necessary */
 	@import 'src/lib/styles/buttons.scss';
 	@import 'src/lib/styles/select.scss';
   
@@ -430,33 +465,6 @@
 	  display: flex;
 	  gap: 10px;
 	  justify-content: center;
-  
-/* 	  button {
-		background-color: $bgcolor;
-		color: $maintextcolor;
-		border: 1px solid $bordercolor;
-		padding: 10px 20px;
-		border-radius: $radius;
-		cursor: pointer;
-		transition: background-color $transition;
-  
-		&:hover {
-		  background-color: $darkerhover;
-		}
-  
-		&:disabled {
-		  opacity: 0.6;
-		  cursor: not-allowed;
-		}
-	  } */
-  
-/* 	  .primary-button {
-		background-color: $color2;
-	  }
-  
-	  .secondary-button {
-		background-color: $bgcolor;
-	  } */
 	}
   
 	.report-content {

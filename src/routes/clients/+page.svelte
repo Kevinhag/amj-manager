@@ -1,6 +1,7 @@
 <script>
 	import { onMount } from 'svelte';
 	import Notification from '$lib/components/Notification.svelte'; // Certifique-se de que o caminho está correto
+	import AddCar from '$lib/components/AddCar.svelte';
 
 	let clients = [];
 	let selectedClient = '';
@@ -281,17 +282,12 @@
 	{/if}
 </section>
 
+<!-- <AddCar /> -->
+
 <style lang="scss">
 	@import 'src/lib/styles/buttons.scss';
 	@import 'src/lib/styles/input.scss';
 	@import 'src/lib/styles/select.scss';
-	input {
-		color: $maintextcolor;
-		width: 100%;
-		padding: 5px;
-		border-radius: 5px;
-		border: 1px solid $bordercolor;
-	}
 
 	section {
 		display: flex;
@@ -363,11 +359,6 @@
 						display: flex;
 						flex-direction: row;
 						flex-wrap: wrap;
-						input {
-							padding: 5px;
-							border-radius: 5px;
-							border: 1px solid $bordercolor;
-						}
 					}
 				}
 				.form-buttons {

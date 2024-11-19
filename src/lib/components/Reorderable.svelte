@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
 	import { onMount } from 'svelte';
-	// import { dndzone } from "svelte-dnd-action";
 
 	const dispatch = createEventDispatcher();
 
@@ -104,9 +103,9 @@
 		update(list);
 	}
 
-	function getTotal(item: { quantidade: number; preco: number }) {
-		return item.quantidade * item.preco;
-	}
+	function getTotal(item) {
+        return item.quantidade * item.preco;
+    }
 
 	function currencyFormat(currency: number) {
 		return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
@@ -136,15 +135,16 @@
 			>
 				<div>#{i + 1}</div>
 				<div class="text" title="Edit">{item.nome}</div>
-
 				<input
 					type="number"
 					name="quantity"
 					id="quantity"
-					min="1"
+					min="0"
 					value={item.quantidade}
 					on:input={(e) => updateQuantity(i, +e.target.value)}
 				/>
+				
+				 {#if item.quantidade !== 0}
 				<input
 					type="text"
 					name="price"
@@ -153,15 +153,28 @@
 					step="10"
 					value={currencyFormat(item.preco)}
 					on:input={(e) => updatePrice(i, e.target.value)}
+					
 				/>
+				{/if}
+				{#if item.quantidade === 0}
 				<input
+					type="text"
+					name="price"
+					id="price"
+					min="0"
+					step="10"
+					disabled
+				/>
+				{/if}
+<!-- 				<input
 					type="text"
 					name="totalprice"
 					id="totalprice"
 					readonly
 					value={currencyFormat(getTotal(item))}
-				/>
+				/> -->
 				<button on:click={() => RemoveItem(i)}>DEL</button>
+
 			</div>
 		{/each}
 	</div>
@@ -204,6 +217,7 @@
 	}
 	input[type='text'],
 	input[type='number'] {
+		
 		margin: 0px;
 		padding: 0px;
 		width: 100%;
@@ -215,8 +229,9 @@
 	}
 
 	.item {
+		text-transform: uppercase;
 		display: grid;
-		grid-template-columns: 3% 40% 10% 15% 15% 10%;
+		grid-template-columns: 5% 40% 10% 20% 15%;
 		user-select: none;
 		gap: 5px;
 		width: 100%;

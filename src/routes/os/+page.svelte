@@ -43,14 +43,29 @@
 	$: selectedPartData = parts.find((part) => part.id == selectedPart);
 	$: selectedCarData = cars.find((car) => car.id == selectedCar);
 	$: selectedClientData = clients.find((client) => client.id == selectedClient);
-	$: filteredClients = clients.filter(
-		(client) =>
-			client.nome.toLowerCase().includes(searchQuery) ||
-			client.cpf.toLowerCase().includes(searchQuery) ||
-			client.tel.toLowerCase().includes(searchQuery) ||
-			client.tel2.toLowerCase().includes(searchQuery),
-		// inserir filtro pela placa do carro do cliente
-	);
+	$: filteredClients = clients.filter((client) => {
+  const searchLower = searchQuery.toLowerCase();
+
+  // Verificar correspondência nos atributos do cliente
+  const clientMatch =
+    client.nome.toLowerCase().includes(searchLower) ||
+    (client.cpf && client.cpf.toLowerCase().includes(searchLower)) ||
+    (client.tel && client.tel.toLowerCase().includes(searchLower)) ||
+    (client.tel2 && client.tel2.toLowerCase().includes(searchLower));
+
+  // Obter carros associados ao cliente
+  const clientCars = cars.filter((car) => car.cliente_id == client.id);
+
+  // Verificar correspondência nos atributos dos carros
+  const carMatch = clientCars.some(
+    (car) =>
+      (car.modelo && car.modelo.toLowerCase().includes(searchLower)) ||
+      (car.placa && car.placa.toLowerCase().includes(searchLower))
+  );
+
+  // Retornar true se houver correspondência no cliente ou nos carros
+  return clientMatch || carMatch;
+});
 	$: filteredParts = parts.filter(
 		(part) =>
 			part.nome.toLowerCase().includes(searchPartQuery) ||
@@ -318,7 +333,7 @@
 			<input
 				type="text"
 				id="search"
-				placeholder="Pesquisar Cliente:"
+				placeholder="Pesquisar Cliente: Nome, Carro, Placa, Telefone, CPF "
 				on:input={handleClientSearch}
 			/>
 			<div class="form-details">
@@ -403,7 +418,10 @@
 
 	<div class="form-main">
 		<!-- Ordem de Serviço -->
-		<div class="os-part-list" class:active-border={addedParts.length !== 0 && selectedClient && selectedCar}>
+		<div
+			class="os-part-list"
+			class:active-border={addedParts.length !== 0 && selectedClient && selectedCar}
+		>
 			<h2>Ordem de Serviço:</h2>
 			<div class="os-container">
 				<div class="reorderable-container">
@@ -424,8 +442,8 @@
 							<option value="Crédito á vista">Crédito á vista</option>
 							<option value="Crédito parcelado">Crédito parcelado</option>
 							<option value="Débito">Débito</option>
-							<option value="Á vista">Á vista</option>
-							<option value="Parcelado">Parcelado</option>
+							<option value="Pix">Pix</option>
+							<option value="Dinheiro">Dinheiro</option>
 						</select>
 						{#if formaPagamento === 'Crédito parcelado' || formaPagamento === 'Parcelado'}
 							<select name="pag-x" id="pag-x" bind:value={parcelas}>
@@ -620,11 +638,19 @@
 				font-weight: bold;
 				color: $maintextcolor;
 			}
+
+			.item {
+				button {
+					width: 32%;
+					font-size: 9pt;
+				}
+			}
 		}
 	}
 
 	#form-pag,
 	#pag-x {
+		background-color: $bgcolor;
 		height: 30px;
 		color: $maintextcolor;
 		margin-bottom: 10px;
@@ -645,18 +671,16 @@
 		height: 100%;
 	}
 
-	/* Estilos do Textarea */
 	textarea {
-		background-color: #444;
-		color: #ffffff;
-		border: 1px solid #555;
+		background-color: $bgcolor;
+		color: $maintextcolor;
+		border: 1px solid $bordercolor;
 		border-radius: 5px;
 		padding: 10px;
 		width: 100%;
 		resize: none;
 	}
 
-	/* Estilos das Notificações */
 	.notification {
 		position: absolute;
 		top: 50px;
@@ -682,7 +706,6 @@
 		box-shadow: 0 0 20px #256d25;
 	}
 
-	/* Estilos do Botão 'Adicionar Peça' */
 	.add-part {
 		background-color: $color;
 		color: #ffffff;
@@ -699,18 +722,16 @@
 		background-color: #444;
 	}
 
-	/* Estilo da Classe 'active-border' */
 	.active-border {
 		border: 1px solid $color2;
 	}
 
-	/* Estilos Adicionais */
 	.text {
 		padding: 0 5px 0 10px;
 		border-radius: 5px;
 		font-size: 1.5rem;
 		font-weight: bold;
-		background-color: #444;
+		background-color: $bgcolor;
 		width: 15px;
 	}
 </style>

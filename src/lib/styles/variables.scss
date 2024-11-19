@@ -1,7 +1,7 @@
 $bodybgcolor: #242424;
 $bgcolor: #333333;
 $bgcolorl: #44444455;
-$bordercolor: #cccccc33;
+$bordercolor: #555;
 $maintextcolor: #f5f5f5;
 $darker: #24242466;
 $darkerhover: #242424aa;
@@ -20,11 +20,10 @@ $transition: 200ms;
 
 @import url('https://fonts.googleapis.com/css2?family=Roboto+Condensed:ital,wght@0,100..900;1,100..900&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Titillium+Web:ital,wght@0,200;0,300;0,400;0,600;0,700;0,900;1,200;1,300;1,400;1,600;1,700&display=swap');
 
-
 :root {
 	font-family: Roboto, system-ui, Avenir, Helvetica, Arial, sans-serif;
 	line-height: 1.5;
-	font-weight: 400; 
+	font-weight: 400;
 
 	color-scheme: light dark;
 	color: rgba(255, 255, 255, 0.87);
@@ -46,3 +45,19 @@ $transition: 200ms;
 	outline: none;
 	box-sizing: border-box;
 }
+
+::-webkit-scrollbar {
+	width: 15px;
+}
+::-webkit-scrollbar-track {
+	background: #555;
+}
+::-webkit-scrollbar-thumb {
+	background: $color2a;
+	// border-radius: 0 10px 10px 0;
+
+	&:hover {
+		background: $color2;
+	}
+}
+
