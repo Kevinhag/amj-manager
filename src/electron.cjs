@@ -71,8 +71,8 @@ function createTables() {
   db.exec(`
     CREATE TABLE IF NOT EXISTS cliente (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      nome TEXT NOT NULL,
-      cpf TEXT UNIQUE,
+      nome TEXT,
+      cpf TEXT,
       endereco TEXT,
       bairro TEXT,
       cidade TEXT,
@@ -85,7 +85,7 @@ function createTables() {
     CREATE TABLE IF NOT EXISTS carro (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       cliente_id INTEGER REFERENCES cliente(id) ON DELETE CASCADE,
-      placa TEXT UNIQUE,
+      placa TEXT,
       marca TEXT,
       modelo TEXT,
       ano INTEGER,
@@ -106,17 +106,17 @@ function createTables() {
       carro_id INTEGER REFERENCES carro(id) ON DELETE CASCADE,
       observacao TEXT,
       data DATE NOT NULL,
-      valor_total DECIMAL(10, 2) NOT NULL,
+      valor_total DECIMAL(10, 2),
       forma_pagamento TEXT
     );
 
     CREATE TABLE IF NOT EXISTS troca_peca (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       ordem_servico_id INTEGER REFERENCES ordem_servico(id) ON DELETE CASCADE,
-      nome_peca TEXT NOT NULL,
-      marca_peca TEXT NOT NULL,
-      quantidade INTEGER NOT NULL,
-      preco_unitario DECIMAL(10, 2) NOT NULL
+      nome_peca TEXT,
+      marca_peca TEXT,
+      quantidade INTEGER,
+      preco_unitario DECIMAL(10, 2)
     );
   `);
 

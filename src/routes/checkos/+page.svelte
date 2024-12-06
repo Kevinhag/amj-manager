@@ -120,7 +120,6 @@
 			  <tr>
 				<th>Nome</th>
 				<th>Quantidade</th>
-				<th>Preço Unitário</th>
 				<th>Preço Total</th>
 			  </tr>
 			</thead>
@@ -131,7 +130,6 @@
 				<tr>
 				  <td>${item.nome_peca}</td>
 				  <td>${item.quantidade}</td>
-				  <td>R$ ${item.preco_unitario.toFixed(2)}</td>
 				  <td>R$ ${(item.preco_unitario * item.quantidade).toFixed(2)}</td>
 				</tr>
 			  `,

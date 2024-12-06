@@ -44,28 +44,28 @@
 	$: selectedCarData = cars.find((car) => car.id == selectedCar);
 	$: selectedClientData = clients.find((client) => client.id == selectedClient);
 	$: filteredClients = clients.filter((client) => {
-  const searchLower = searchQuery.toLowerCase();
+		const searchLower = searchQuery.toLowerCase();
 
-  // Verificar correspondência nos atributos do cliente
-  const clientMatch =
-    client.nome.toLowerCase().includes(searchLower) ||
-    (client.cpf && client.cpf.toLowerCase().includes(searchLower)) ||
-    (client.tel && client.tel.toLowerCase().includes(searchLower)) ||
-    (client.tel2 && client.tel2.toLowerCase().includes(searchLower));
+		// Verificar correspondência nos atributos do cliente
+		const clientMatch =
+			client.nome.toLowerCase().includes(searchLower) ||
+			(client.cpf && client.cpf.toLowerCase().includes(searchLower)) ||
+			(client.tel && client.tel.toLowerCase().includes(searchLower)) ||
+			(client.tel2 && client.tel2.toLowerCase().includes(searchLower));
 
-  // Obter carros associados ao cliente
-  const clientCars = cars.filter((car) => car.cliente_id == client.id);
+		// Obter carros associados ao cliente
+		const clientCars = cars.filter((car) => car.cliente_id == client.id);
 
-  // Verificar correspondência nos atributos dos carros
-  const carMatch = clientCars.some(
-    (car) =>
-      (car.modelo && car.modelo.toLowerCase().includes(searchLower)) ||
-      (car.placa && car.placa.toLowerCase().includes(searchLower))
-  );
+		// Verificar correspondência nos atributos dos carros
+		const carMatch = clientCars.some(
+			(car) =>
+				(car.modelo && car.modelo.toLowerCase().includes(searchLower)) ||
+				(car.placa && car.placa.toLowerCase().includes(searchLower)),
+		);
 
-  // Retornar true se houver correspondência no cliente ou nos carros
-  return clientMatch || carMatch;
-});
+		// Retornar true se houver correspondência no cliente ou nos carros
+		return clientMatch || carMatch;
+	});
 	$: filteredParts = parts.filter(
 		(part) =>
 			part.nome.toLowerCase().includes(searchPartQuery) ||
@@ -229,16 +229,12 @@
 				<td>Placa Nº: ${selectedCarData?.placa || 'N/A'}</td>
 				<td>Carro: ${selectedCarData?.modelo || 'N/A'}</td>
 			  </tr>
-			<tr>
-            	<td>Forma de Pagamento: ${formaPagCompleta || 'N/A'}</td>
-          	</tr>
 			</table>
 			<table class="table">
 			  <thead>
 				<tr>
 				  <th>Nome</th>
 				  <th class="qtt">Quantidade</th>
-				  <th class="preco">Preço Unitário</th>
 				  <th class="preco">Preço</th>
 				</tr>
 			  </thead>
@@ -249,7 +245,6 @@
 				  <tr>
 					<td>${part.nome}</td>
 					<td>${part.quantidade}</td>
-					<td>R$ ${part.preco.toFixed(2)}</td>
 					<td>R$ ${(part.quantidade * part.preco).toFixed(2)}</td>
 				  </tr>
 				`,
@@ -309,11 +304,28 @@
 		}).format(value);
 	}
 
+	function printOS() {
+		const content = pageOS();
+		const printWindow = window.open('', '', 'width=1000,height=auto');
+		printWindow.document.write(content);
+		printWindow.document.close();
+
+		printWindow.onload = () => {
+			printWindow.print();
+			printWindow.close();
+		};
+	}
+
 	window.electron.onSavePDF(() => {
 		const content = pageOS();
 		window.electron.printToPDF(content);
 	});
 </script>
+
+<link
+	rel="stylesheet"
+	href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=picture_as_pdf"
+/>
 
 <section>
 	<div class="form-main">
@@ -471,9 +483,10 @@
 						style="resize: none;"
 					/>
 					<div class="item">
-						<button type="button" on:click={openPopup}>Visualizar</button>
-						<button type="button" on:click={saveAsPDF}>Exportar PDF</button>
-						<button type="button" on:click={saveOrder}>Finalizar</button>
+						<button type="button" class="icon-button" on:click={openPopup}><svg xmlns="http://www.w3.org/2000/svg" height="26px" viewBox="0 -960 960 960" width="26px" fill="#e8eaed"><path d="M216-144q-29.7 0-50.85-21.15Q144-186.3 144-216v-528q0-29.7 21.15-50.85Q186.3-816 216-816h528q29.7 0 50.85 21.15Q816-773.7 816-744v528q0 29.7-21.15 50.85Q773.7-144 744-144H216Zm0-72h528v-456H216v456Zm263.88-84Q406-300 348-340.5T264-444q26-63 84.12-103.5 58.11-40.5 132-40.5Q554-588 612-547.5T696-444q-26 63-84.12 103.5-58.11 40.5-132 40.5Zm.12-48q53 0 95.88-25.44Q618.76-398.88 643-444q-24.24-45.12-67.12-70.56Q533-540 480-540q-53 0-95.88 25.44Q341.24-489.12 317-444q24.24 45.12 67.12 70.56Q427-348 480-348Zm0-96Zm0 60q25 0 42.5-17.5T540-444q0-25-17.5-42.5T480-504q-25 0-42.5 17.5T420-444q0 25 17.5 42.5T480-384Z"/></svg></button>
+						<button	type="button" class="icon-button" on:click={saveAsPDF}><svg xmlns="http://www.w3.org/2000/svg" height="26px" viewBox="0 -960 960 960" width="26px" fill="#e8eaed"><path d="M360-456h48v-72h24q20.4 0 34.2-13.8Q480-555.6 480-576v-24q0-20.4-13.8-34.2Q452.4-648 432-648h-72v192Zm48-120v-24h24v24h-24Zm96 120h72q20.4 0 34.2-13.8Q624-483.6 624-504v-96q0-20.4-13.8-34.2Q596.4-648 576-648h-72v192Zm48-48v-96h24v96h-24Zm96 48h48v-72h48v-48h-48v-24h48v-48h-96v192ZM312-240q-29.7 0-50.85-21.15Q240-282.3 240-312v-480q0-29.7 21.15-50.85Q282.3-864 312-864h480q29.7 0 50.85 21.15Q864-821.7 864-792v480q0 29.7-21.15 50.85Q821.7-240 792-240H312Zm0-72h480v-480H312v480ZM168-96q-29.7 0-50.85-21.15Q96-138.3 96-168v-552h72v552h552v72H168Zm144-696v480-480Z"/></svg></button>
+						<button type="button" class="icon-button" on:click={printOS}><svg xmlns="http://www.w3.org/2000/svg" height="26px" viewBox="0 -960 960 960" width="26px" fill="#e8eaed"><path d="M640-640v-120H320v120h-80v-200h480v200h-80Zm-480 80h640-640Zm560 100q17 0 28.5-11.5T760-500q0-17-11.5-28.5T720-540q-17 0-28.5 11.5T680-500q0 17 11.5 28.5T720-460Zm-80 260v-160H320v160h320Zm80 80H240v-160H80v-240q0-51 35-85.5t85-34.5h560q51 0 85.5 34.5T880-520v240H720v160Zm80-240v-160q0-17-11.5-28.5T760-560H200q-17 0-28.5 11.5T160-520v160h80v-80h480v80h80Z"/></svg></button>
+						<button type="button" class="icon-button" on:click={saveOrder}><svg xmlns="http://www.w3.org/2000/svg" height="26px" viewBox="0 -960 960 960" width="26px" fill="#e8eaed"><path d="M480-96q-79 0-149-30t-122.5-82.5Q156-261 126-331T96-480q0-80 30-149.5t82.5-122Q261-804 331-834t149-30q63 0 120 19t105 54l-52 52q-37-26-81-39.5T480-792q-130 0-221 91t-91 221q0 130 91 221t221 91q130 0 221-91t91-221q0-21-3-41.5t-8-40.5l57-57q13 32 19.5 67t6.5 72q0 79-30 149t-82.5 122.5Q699-156 629.5-126T480-96Zm-55-211L264-468l52-52 110 110 387-387 51 51-439 439Z"/></svg></button>
 					</div>
 				</div>
 			</div>
@@ -497,6 +510,8 @@
 	@import 'src/lib/styles/buttons.scss';
 	@import 'src/lib/styles/input.scss';
 	@import 'src/lib/styles/select.scss';
+
+
 
 	/* Estilos da Seção Principal */
 	section {
@@ -641,8 +656,9 @@
 
 			.item {
 				button {
-					width: 32%;
-					font-size: 9pt;
+					width: 24%;
+					// font-size: 30pt;
+					padding: 5px;
 				}
 			}
 		}
