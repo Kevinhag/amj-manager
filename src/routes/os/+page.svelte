@@ -245,7 +245,7 @@
 				  <tr>
 					<td>${part.nome}</td>
 					<td>${part.quantidade}</td>
-					<td>R$ ${(part.quantidade * part.preco).toFixed(2)}</td>
+					<td>R$ ${part.preco}</td>
 				  </tr>
 				`,
 					)
