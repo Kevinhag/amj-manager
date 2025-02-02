@@ -92,8 +92,9 @@
 		update(list);
 	}
 
-	function updateQuantity(i: number, quantity: number) {
-		list[i].quantidade = isNaN(quantity) ? 0 : quantity;
+	function updateQuantity(i: number, value: string) {
+		const numericValue = parseInt(value);
+		list[i].quantidade = isNaN(numericValue) || numericValue === 0 ? "" : numericValue;
 		update(list);
 	}
 
@@ -140,8 +141,9 @@
 					name="quantity"
 					id="quantity"
 					min="0"
-					value={item.quantidade}
-					on:input={(e) => updateQuantity(i, +e.target.value)}
+					value={item.quantidade === "" ? "" : item.quantidade}
+					on:input={(e) => updateQuantity(i, e.target.value)}
+
 				/>
 				
 				 {#if item.quantidade !== 0}

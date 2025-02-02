@@ -220,18 +220,23 @@ exServer.put('/api/update-client', async (req, res) => {
       tel,
       tel2,
     } = req.body;
-    const updateClientQuery = `UPDATE cliente SET nome = ?, cpf = ?, endereco = ?, bairro = ?, cidade = ?, numero_casa = ?, complemento = ?, tel = ?, tel2 = ? WHERE id = ?`;
+    const updateClientQuery = `
+      UPDATE cliente
+      SET nome = ?, cpf = ?, endereco = ?, bairro = ?, cidade = ?,
+          numero_casa = ?, complemento = ?, tel = ?, tel2 = ?
+      WHERE id = ?
+    `;
     const stmt = db.prepare(updateClientQuery);
     const info = stmt.run(
-      nome.toUpperCase(),
-      cpf.toUpperCase(),
-      endereco.toUpperCase(),
-      bairro.toUpperCase(),
-      cidade.toUpperCase(),
-      numero_casa.toUpperCase(),
-      complemento.toUpperCase(),
-      tel.toUpperCase(),
-      tel2.toUpperCase(),
+      (nome || "").toUpperCase(),
+      (cpf || "").toUpperCase(),
+      (endereco || "").toUpperCase(),
+      (bairro || "").toUpperCase(),
+      (cidade || "").toUpperCase(),
+      (numero_casa || "").toUpperCase(),
+      (complemento || "").toUpperCase(),
+      (tel || "").toUpperCase(),
+      (tel2 || "").toUpperCase(),
       id
     );
 
@@ -313,18 +318,33 @@ exServer.put('/api/update-car', async (req, res) => {
       observacao,
       obsretifica,
     } = req.body;
-    const updateCarQuery = `UPDATE carro SET cliente_id = ?, modelo = ?, marca = ?, placa = ?, ano = ?, km = ?, potencia = ?, observacao = ?, obsretifica = ? WHERE id = ?`;
+
+    const updateCarQuery = `
+    UPDATE carro SET 
+    cliente_id = ?, 
+    modelo = ?,
+     marca = ?, 
+     placa = ?, 
+     ano = ?, 
+     km = ?, 
+     potencia = ?, 
+     observacao = ?, 
+     obsretifica = ? 
+     WHERE id = ?`;
+
+     const safeToUpper = (value) => (value ? value.toUpperCase() : "");
+     
     const stmt = db.prepare(updateCarQuery);
     const info = stmt.run(
       cliente_id,
-      modelo.toUpperCase(),
-      marca.toUpperCase(),
-      placa.toUpperCase(),
+      safeToUpper(modelo),
+      safeToUpper(marca),
+      safeToUpper(placa),
       ano,
       km,
       potencia,
-      observacao.toUpperCase(),
-      obsretifica.toUpperCase(),
+      safeToUpper(observacao),
+      safeToUpper(obsretifica),
       id
     );
 
@@ -356,6 +376,30 @@ exServer.put('/api/update-parts', async (req, res) => {
     res.status(500).send({ error: error.message });
   }
 });
+
+exServer.post('/api/update-km', async (req, res) => {
+  try {
+    const { id, km } = req.body;
+    if (!id) {
+      return res.status(400).json({ error: 'Carro id é requerido' });
+    }
+    
+    // Atualiza o campo km na tabela "carro"
+    const updateKmQuery = `UPDATE carro SET km = ? WHERE id = ?`;
+    const stmt = db.prepare(updateKmQuery);
+    const info = stmt.run(km, id);
+    
+    if (info.changes === 0) {
+      return res.status(404).json({ error: 'Carro não encontrado' });
+    }
+    
+    res.json({ message: 'KM atualizado com sucesso!' });
+  } catch (error) {
+    console.error('Erro atualizando KM:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 
 exServer.delete('/api/delete-car/:id', async (req, res) => {
   try {
@@ -635,7 +679,7 @@ function createMainWindow() {
       const serviceOrders = db
         .prepare(
           `
-          SELECT os.*, carro.modelo, carro.marca, carro.placa
+          SELECT os.*, carro.modelo, carro.marca, carro.placa, carro.km
           FROM ordem_servico os
           JOIN carro ON os.carro_id = carro.id
           WHERE carro.cliente_id = ?
@@ -678,8 +722,125 @@ function createMainWindow() {
 
   ipcMain.handle('fetch-report-data', async (event, reportType, params) => {
     try {
-      // Código existente para fetch-report-data
-      // ...
+      let query = '';
+      let queryParams = [];
+  
+      if (reportType === 'daily') {
+        query = `
+          SELECT 
+            cliente.id AS clientId,
+            cliente.nome AS nome_cliente,
+            cliente.cpf AS cpf,
+            cliente.tel AS telefone,
+            ordem_servico.id AS osId,
+            ordem_servico.data AS data,
+            ordem_servico.valor_total AS valorTotal,
+            ordem_servico.forma_pagamento AS formaPagamento,
+            ordem_servico.observacao AS observacao,
+            carro.modelo AS carro_modelo,
+            carro.marca AS carro_marca,
+            carro.placa AS carro_placa,
+            troca_peca.id AS itemId,
+            troca_peca.nome_peca AS item_nome,
+            troca_peca.quantidade AS quantidade,
+            troca_peca.preco_unitario AS preco
+          FROM ordem_servico
+          JOIN carro ON ordem_servico.carro_id = carro.id
+          JOIN cliente ON carro.cliente_id = cliente.id
+          LEFT JOIN troca_peca ON troca_peca.ordem_servico_id = ordem_servico.id
+          WHERE DATE(ordem_servico.data) = DATE(?)
+          ORDER BY cliente.nome, ordem_servico.data
+        `;
+        queryParams = [params.date];
+      } else if (reportType === 'monthly') {
+        query = `
+          SELECT 
+            cliente.id AS clientId,
+            cliente.nome AS nome_cliente,
+            cliente.cpf AS cpf,
+            cliente.tel AS telefone,
+            ordem_servico.id AS osId,
+            ordem_servico.data AS data,
+            ordem_servico.valor_total AS valorTotal,
+            ordem_servico.forma_pagamento AS formaPagamento,
+            ordem_servico.observacao AS observacao,
+            carro.modelo AS carro_modelo,
+            carro.marca AS carro_marca,
+            carro.placa AS carro_placa,
+            troca_peca.id AS itemId,
+            troca_peca.nome_peca AS item_nome,
+            troca_peca.quantidade AS quantidade,
+            troca_peca.preco_unitario AS preco
+          FROM ordem_servico
+          JOIN carro ON ordem_servico.carro_id = carro.id
+          JOIN cliente ON carro.cliente_id = cliente.id
+          LEFT JOIN troca_peca ON troca_peca.ordem_servico_id = ordem_servico.id
+          WHERE strftime('%Y-%m', ordem_servico.data) = ?
+          ORDER BY cliente.nome, ordem_servico.data
+        `;
+        queryParams = [params.month];
+      } else if (reportType === 'annual') {
+        query = `
+          SELECT 
+            cliente.id AS clientId,
+            cliente.nome AS nome_cliente,
+            cliente.cpf AS cpf,
+            cliente.tel AS telefone,
+            ordem_servico.id AS osId,
+            ordem_servico.data AS data,
+            ordem_servico.valor_total AS valorTotal,
+            ordem_servico.forma_pagamento AS formaPagamento,
+            ordem_servico.observacao AS observacao,
+            carro.modelo AS carro_modelo,
+            carro.marca AS carro_marca,
+            carro.placa AS carro_placa,
+            troca_peca.id AS itemId,
+            troca_peca.nome_peca AS item_nome,
+            troca_peca.quantidade AS quantidade,
+            troca_peca.preco_unitario AS preco
+          FROM ordem_servico
+          JOIN carro ON ordem_servico.carro_id = carro.id
+          JOIN cliente ON carro.cliente_id = cliente.id
+          LEFT JOIN troca_peca ON troca_peca.ordem_servico_id = ordem_servico.id
+          WHERE strftime('%Y', ordem_servico.data) = ?
+          ORDER BY cliente.nome, ordem_servico.data
+        `;
+        queryParams = [params.year.toString()];
+      } else if (reportType === 'custom') {
+        query = `
+          SELECT 
+            cliente.id AS clientId,
+            cliente.nome AS nome_cliente,
+            cliente.cpf AS cpf,
+            cliente.tel AS telefone,
+            ordem_servico.id AS osId,
+            ordem_servico.data AS data,
+            ordem_servico.valor_total AS valorTotal,
+            ordem_servico.forma_pagamento AS formaPagamento,
+            ordem_servico.observacao AS observacao,
+            carro.modelo AS carro_modelo,
+            carro.marca AS carro_marca,
+            carro.placa AS carro_placa,
+            troca_peca.id AS itemId,
+            troca_peca.nome_peca AS item_nome,
+            troca_peca.quantidade AS quantidade,
+            troca_peca.preco_unitario AS preco
+          FROM ordem_servico
+          JOIN carro ON ordem_servico.carro_id = carro.id
+          JOIN cliente ON carro.cliente_id = cliente.id
+          LEFT JOIN troca_peca ON troca_peca.ordem_servico_id = ordem_servico.id
+          WHERE ordem_servico.data BETWEEN ? AND ?
+          ORDER BY cliente.nome, ordem_servico.data
+        `;
+        queryParams = [params.startDate, params.endDate];
+      } else {
+        throw new Error('Invalid report type');
+      }
+  
+      const stmt = db.prepare(query);
+      const data = stmt.all(...queryParams);
+      return data;
+      
     } catch (error) {
       console.error('Error fetching report data:', error);
       throw error;

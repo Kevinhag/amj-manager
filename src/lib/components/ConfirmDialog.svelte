@@ -31,7 +31,7 @@
 </div>
 
 <style lang="scss">
-	// @import './styles/buttons.scss';
+	@import 'src/lib/styles/buttons.scss';
 
 	.dialog {
 		position: fixed;

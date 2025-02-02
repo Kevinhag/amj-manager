@@ -13,11 +13,12 @@
 	let searchQuery = ''; // Armazena o valor da pesquisa do cliente
 
 	onMount(() => {
-		fetchCars();
-		fetchClients();
+		// fetchCars();
+		// fetchClients();
+		fetchData();
 	});
 
-	async function fetchCars() {
+/* 	async function fetchCars() {
 		try {
 			const response = await fetch('http://localhost:3000/api/cars');
 			cars = await response.json();
@@ -32,6 +33,27 @@
 			clients = await response.json();
 		} catch (error) {
 			console.error('Erro ao buscar clientes:', error);
+		}
+	} */
+
+	async function fetchData() {
+		try {
+			const [carResponse, clientResponse] = await Promise.all([
+				fetch('http://localhost:3000/api/cars'),
+				fetch('http://localhost:3000/api/clients'),
+			]);
+
+			if (!carResponse.ok || !clientResponse.ok) {
+				throw new Error('Falha ao buscar dados');
+			}
+
+			cars = await carResponse.json();
+			clients = await clientResponse.json();
+			// console.log('Carros:', cars);
+			// console.log('Clientes:', clients);
+		} catch (error) {
+			// console.error('Error fetching data:', error);
+			showNotification('Error fetching data: ' + error.message, 'error');
 		}
 	}
 
@@ -65,7 +87,7 @@
 			.then((data) => {
 				showNotification('Carro alterado com sucesso!', 'success');
 				console.log('Carro atualizado:', data);
-				fetchCars(); // Atualiza a lista de carros
+				fetchData();
 			})
 			.catch((error) => {
 				showNotification('Erro ao atualizar carro', 'error');
@@ -102,7 +124,7 @@
 			.then((data) => {
 				showNotification('Carro adicionado com sucesso!', 'success');
 				console.log('Carro adicionado:', data);
-				fetchCars();
+				fetchData();
 			})
 			.catch((error) => {
 				showNotification('Erro ao adicionar carro', 'error');
@@ -123,7 +145,7 @@
 			.then((data) => {
 				showNotification('Carro deletado com sucesso!', 'success');
 				console.log('Carro deletado:', data);
-				fetchCars(); // Atualiza a lista de carros
+				fetchData(); // Atualiza a lista de carros
 				selectedCarData = null; // Reseta a seleção
 			})
 			.catch((error) => {

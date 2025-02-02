@@ -71,6 +71,9 @@ CREATE INDEX IF NOT EXISTS idx_troca_peca_peca_id ON troca_peca (peca_id);
 ALTER TABLE ordem_servico
 ADD COLUMN forma_pagamento TEXT;
 
+ALTER TABLE ordem_servico
+ADD COLUMN car_km INTEGER;
+
 
 ALTER TABLE ordem_servico
 DROP COLUMN forma_pagamento;

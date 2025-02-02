@@ -1,6 +1,6 @@
 {
 	"name": "amj-manager",
-	"version": "0.2.2",
+	"version": "0.2.5",
 	"description": "AMJ Electron App.",
 	"main": "src/electron.cjs",
 	"type": "module",

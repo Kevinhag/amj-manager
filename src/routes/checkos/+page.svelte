@@ -71,18 +71,17 @@
 	}
 
 	function formatDate(dateStr) {
-		return format(new Date(dateStr), 'dd/MM/yyyy');
-	}
-
+    return format(new Date(dateStr), 'dd/MM/yyyy');
+  }
 	function viewOS(os) {
-		const content = generateOSContent(os);
+		const content = generateOSContent(os, true);
 		const newWindow = window.open('', '', 'width=800,height=600');
 		newWindow.document.write(content);
 		newWindow.document.close();
 	}
 
 	function exportOSToPDF(os) {
-		const content = generateOSContent(os);
+		const content = generateOSContent(os, false);
 		if (window.electron) {
 			window.electron.printToPDF(content);
 		} else {
@@ -90,121 +89,126 @@
 		}
 	}
 
-	function generateOSContent(os) {
-	// Calcula o valor total dos itens
-	const totalValue = os.itens.reduce(
-		(sum, item) => sum + item.preco_unitario * item.quantidade,
-		0,
-	);
+	function generateOSContent(os, isPreview) {
+    // Calcula o valor total dos itens
+    const totalValue = os.itens.reduce(
+      (sum, item) => sum + item.preco_unitario * item.quantidade,
+      0
+    );
 
-	// Garante que a função `selectedClient` e `formatDate` estejam disponíveis
-	// (por exemplo, selectedClient pode ser obtido a partir de um reactive statement ou prop).
-	// Se 'selectedClient' não estiver no escopo global, você pode passar como parâmetro.
-
-	return `
-    <!DOCTYPE html>
-    <html lang="pt-BR">
-    <head>
-      <meta charset="UTF-8" />
-      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>Auto Mecânica Jorge</title>
-      <style>
-        body {
-          font-family: 'Arial', sans-serif;
-        }
-        .container {
-          width: 95%;
-          margin: 0 auto;
-          padding: 10px;
-          border: 1px solid #333;
-        }
-        .header {
-          text-align: center;
-        }
-        .header h1 {
-          margin: 0;
-        }
-        .header p {
-          margin: 5px 0;
-        }
-        .info,
-        .table {
-          width: 100%;
-          border-collapse: collapse;
-          margin-top: 20px;
-        }
-        .info td {
-          padding: 5px;
-        }
-        .table th,
-        .table td {
-          border: 1px solid #000;
-          padding: 8px;
-          text-align: left;
-        }
-        .signature {
-          margin-top: 20px;
-          display: flex;
-          justify-content: space-between;
-        }
-        .qtt {
-          width: 100px;
-        }
-        .preco {
-          width: 120px;
-        }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <div class="header">
-          <h1>AUTO MECÂNICA JORGE</h1>
-          <p>JTCS Auto Mecânica Ltda. - ME</p>
-          <p>Rua Virgílio Pedro Rubini, 1670 - Barra do Rio Cerro</p>
-          <p>CEP 89260-190 - Jaraguá do Sul - Santa Catarina</p>
-          <p>Fone: (47) 3376-0444</p>
-        </div>
-        <table class="info">
-          <tr>
-            <td><strong>Cliente:</strong> ${selectedClient?.nome || 'N/A'}</td>
-            <td><strong>Data:</strong> ${formatDate(os.data)}</td>
-          </tr>
-          <tr>
-            <td><strong>Fone:</strong> ${selectedClient?.tel || 'N/A'}</td>
-            <td><strong>Observações:</strong> ${os.observacao || 'Nenhuma'}</td>
-          </tr>
-        </table>
-        <table class="table">
-          <thead>
+    return `
+      <!DOCTYPE html>
+      <html lang="pt-BR">
+      <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Auto Mecânica Jorge</title>
+        <style>
+          body {
+            font-family: 'Arial', sans-serif;
+          }
+          .container {
+            width: 95%;
+            margin: 0 auto;
+            padding: 10px;
+            border: 1px solid #333;
+          }
+          .header {
+            text-align: center;
+          }
+          .header h1 {
+            margin: 0;
+          }
+          .header p {
+            margin: 5px 0;
+          }
+          .info,
+          .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+          }
+          .info td {
+            padding: 5px;
+          }
+          .table th,
+          .table td {
+            border: 1px solid #000;
+            padding: 8px;
+            text-align: left;
+          }
+          .signature {
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+          }
+          .qtt {
+            width: 100px;
+          }
+          .preco {
+            width: 120px;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>AUTO MECÂNICA JORGE</h1>
+            <p>JTCS Auto Mecânica Ltda. - ME</p>
+            <p>Rua Virgílio Pedro Rubini, 1670 - Barra do Rio Cerro</p>
+            <p>CEP 89260-190 - Jaraguá do Sul - Santa Catarina</p>
+            <p>Fone: (47) 3376-0444</p>
+          </div>
+          <table class="info">
             <tr>
-              <th>Nome da Peça</th>
-              <th class="qtt">Quantidade</th>
-              <th class="preco">Preço</th>
+              <td><strong>Cliente:</strong> ${selectedClient?.nome || 'N/A'}</td>
+              <td><strong>Data:</strong> ${formatDate(os.data)}</td>
             </tr>
-          </thead>
-          <tbody>
-            ${os.itens
-							.map(
-								(item) => `
+            <tr>
+              <td><strong>Fone:</strong> ${selectedClient?.tel || 'N/A'}</td>
+              <td><strong>Observações:</strong> ${os.observacao || 'Nenhuma'}</td>
+            </tr>
+            <tr>
+              <td><strong>Carro:</strong> ${os.marca || 'N/A'}</td>
+              <td><strong>Modelo:</strong> ${os.modelo || 'N/A'}</td>
+            </tr>
+            <tr>
+              <td colspan="2"><strong>Placa:</strong> ${os.placa || 'N/A'}</td>
+            </tr>
+            ${isPreview ? `<tr>
+              <td colspan="2"><strong>Kilometragem:</strong> ${os.km || 'N/A'}</td>
+            </tr>` : ''}
+          </table>
+          <table class="table">
+            <thead>
               <tr>
-                <td>${item.nome_peca}</td>
-                <td>${item.quantidade}</td>
-                <td>R$ ${item.preco_unitario}</td>
+                <th>Nome da Peça</th>
+                <th class="qtt">Quantidade</th>
+                <th class="preco">Preço</th>
               </tr>
-            `,
-							)
-							.join('')}
-          </tbody>
-        </table>
-        <div class="signature">
-          <div>Assinatura: ___________________________</div>
-          <div>TOTAL R$ ${totalValue.toFixed(2)}</div>
+            </thead>
+            <tbody>
+              ${os.itens.map(
+                (item) => `
+                <tr>
+                  <td>${item.nome_peca}</td>
+                  <td>${item.quantidade}</td>
+                  <td>R$ ${item.preco_unitario.toFixed(2)}</td>
+                </tr>
+              `
+              ).join('')}
+            </tbody>
+          </table>
+          <br>
+          <div class="signature">
+            <div>Assinatura: _______________________________________________</div>
+            <div>TOTAL R$ ${totalValue.toFixed(2)}</div>
+          </div>
         </div>
-      </div>
-    </body>
-    </html>
-  `;
-}
+      </body>
+      </html>
+    `;
+  }
 
 	function showNotification(msg, msgType) {
 		message = msg;

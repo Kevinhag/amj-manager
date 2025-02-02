@@ -11,12 +11,15 @@
 	let clients = [];
 	let addedParts = [];
 
+	// let idMO;
+	// let checkMO = false;
 	let selectedPart = '';
 	let selectedCar = '';
 	let selectedClient = '';
 	let searchQuery = '';
 	let searchPartQuery = '';
 	let observacao = '';
+	let kmInput = '';
 
 	let formaPagamento = '';
 	let parcelas = '';
@@ -97,6 +100,42 @@
 		}
 	}
 
+	async function saveKm() {
+		if (!selectedCarData) {
+			showNotification('Selecione um carro para salvar o KM.', 'error');
+			return;
+		}
+
+		const data = {
+			id: selectedCarData.id, // Id do carro selecionado
+			km: kmInput, // Novo valor de KM
+		};
+
+		try {
+			const response = await fetch('http://localhost:3000/api/update-km', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify(data),
+			});
+
+			if (!response.ok) {
+				throw new Error('Failed to save KM');
+			}
+
+			const result = await response.json();
+			console.log('KM saved successfully:', result);
+			showNotification('KM salvo com sucesso!', 'success');
+			await fetchData(); // Atualiza os dados para refletir a alteração
+		} catch (error) {
+			console.error('Error saving KM:', error);
+			showNotification('Erro salvando KM: ' + error.message, 'error');
+		}
+	}
+
+	
+
 	async function saveOrder(event) {
 		event.preventDefault(); // Prevent default button behavior
 
@@ -140,16 +179,21 @@
 
 					const result = await response.json();
 					console.log('Service order saved successfully:', result);
-					showNotification('Service order saved successfully!', 'success');
-					await fetchData(); // Refresh data to update DB state
+					showNotification('OS salva com sucesso!', 'success');
+					await fetchData();
 					resetForm();
 				} catch (error) {
 					console.error('Error saving service order:', error);
-					showNotification('Error saving service order: ' + error.message, 'error');
+					showNotification('Erro salvando OS: ' + error.message, 'error');
 				}
 			},
 			() => {},
 		);
+	}
+
+	function handleCarChange() {
+		// Quando um carro for selecionado, preenche o campo km com o valor atual do carro
+		kmInput = selectedCarData ? selectedCarData.km : '';
 	}
 
 	function resetForm() {
@@ -161,12 +205,27 @@
 		searchPartQuery = '';
 	}
 
+	// 	function toggleMO(checked) {
+	//     if (checked) {
+	//       // Verifica se ainda não existe um item "Mão de Obra"
+	//       const exists = addedParts.some((item) => item.nome === 'Mão de Obra');
+	//       if (!exists) {
+	//         addedParts.push({ nome: 'Mão de Obra', quantidade: '', preco: 0 });
+
+	//         addedParts = [...addedParts];
+	//       }
+	//     } else {
+	//       // Remove o item "Mão de Obra" caso exista
+	//       addedParts = addedParts.filter((part) => part.nome !== 'Mão de Obra');
+	//     }
+	//   }
+
 	function addPartList() {
 		if (selectedPartData) {
 			addedParts.push({ ...selectedPartData, quantidade: 1, preco: 0 });
 			addedParts = [...addedParts];
 		} else {
-			showNotification('Selected part not found', 'error');
+			showNotification('Peça não encontrada.', 'error');
 		}
 	}
 
@@ -245,15 +304,16 @@
 				  <tr>
 					<td>${part.nome}</td>
 					<td>${part.quantidade}</td>
-					<td>R$ ${part.preco}</td>
+					<td>R$ ${part.preco.toFixed(2)}</td>
 				  </tr>
 				`,
 					)
 					.join('')}
 			  </tbody>
 			</table>
+			<br>
 			<div class="signature">
-			  <div>Assinatura: ___________________________</div>
+			  <div>Assinatura: _______________________________________________</div>
 			  <div>TOTAL R$ ${totalValue.toFixed(2)}</div>
 			</div>
 		  </div>
@@ -376,29 +436,59 @@
 		<div class="form-car" class:active-border={selectedCar}>
 			<h2>Carros:</h2>
 			<div class="form-details">
-				<select name="cars" id="cars" size="4" bind:value={selectedCar}>
+				<select
+					name="cars"
+					id="cars"
+					size="4"
+					bind:value={selectedCar}
+					on:change={handleCarChange}
+				>
 					{#each cars.filter((car) => car.cliente_id == selectedClient) as car (car.id)}
 						<option value={car.id}>
 							{car.marca} - {car.modelo} - {car.placa}
 						</option>
 					{/each}
 				</select>
-
-				<div class="form-details-vis">
-					{#if selectedCarData}
-						<p>Marca: {selectedCarData.marca}</p>
-						<p>Modelo: {selectedCarData.modelo}</p>
-						<p>Ano: {selectedCarData.ano}</p>
-						<p>Placa: {selectedCarData.placa}</p>
-						{#if selectedCarData.observacao}
-							<p>Observação: {selectedCarData.observacao}</p>
+				<div>
+					<div class="form-details-vis">
+						{#if selectedCarData}
+							<p>Marca: {selectedCarData.marca}</p>
+							<p>Modelo: {selectedCarData.modelo}</p>
+							<p>Ano: {selectedCarData.ano}</p>
+							<p>Placa: {selectedCarData.placa}</p>
+							{#if selectedCarData.observacao}
+								<p>Observação: {selectedCarData.observacao}</p>
+							{/if}
+							{#if selectedCarData.obsretifica}
+								<p>Observação Retífica: {selectedCarData.obsretifica}</p>
+							{/if}
+						{:else}
+							<h3>Nenhum Carro Selecionado.</h3>
 						{/if}
-						{#if selectedCarData.obsretifica}
-							<p>Observação Retífica: {selectedCarData.obsretifica}</p>
-						{/if}
-					{:else}
-						<h3>Nenhum Carro Selecionado.</h3>
-					{/if}
+					</div>
+					<div class="form-km">
+						<label for="km">KM:</label>
+						<input
+							type="text"
+							name="km"
+							id="km"
+							placeholder="Km"
+							bind:value={kmInput}
+						/>
+						<button type="button" id="save-km" on:click={saveKm}>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								height="26px"
+								viewBox="0 -960 960 960"
+								width="26px"
+								fill="#e8eaed"
+							>
+								<path
+									d="M480-96q-79 0-149-30t-122.5-82.5Q156-261 126-331T96-480q0-80 30-149.5t82.5-122Q261-804 331-834t149-30q63 0 120 19t105 54l-52 52q-37-26-81-39.5T480-792q-130 0-221 91t-91 221q0 130 91 221t221 91q130 0 221-91t91-221q0-21-3-41.5t-8-40.5l57-57q13 32 19.5 67t6.5 72q0 79-30 149t-82.5 122.5Q699-156 629.5-126T480-96Zm-55-211L264-468l52-52 110 110 387-387 51 51-439 439Z"
+								/>
+							</svg>
+						</button>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -441,16 +531,16 @@
 				</div>
 
 				<div class="total-container">
-					<div>Total: {currencyFormat(totalValue)}</div>
+					<div>
+						Total: {currencyFormat(totalValue)}
+					</div>
 				</div>
 
 				<div>
 					<div>
 						<label for="form-pag">Forma de pagamento:</label>
 						<select name="form-pag" id="form-pag" bind:value={formaPagamento}>
-							<option value="" disabled selected hidden>
-								Selecione a forma de pagamento
-							</option>
+							<option value="" disabled selected hidden>Forma de pagamento</option>
 							<option value="Crédito á vista">Crédito á vista</option>
 							<option value="Crédito parcelado">Crédito parcelado</option>
 							<option value="Débito">Débito</option>
@@ -482,11 +572,60 @@
 						bind:value={observacao}
 						style="resize: none;"
 					/>
+
 					<div class="item">
-						<button type="button" class="icon-button" on:click={openPopup}><svg xmlns="http://www.w3.org/2000/svg" height="26px" viewBox="0 -960 960 960" width="26px" fill="#e8eaed"><path d="M216-144q-29.7 0-50.85-21.15Q144-186.3 144-216v-528q0-29.7 21.15-50.85Q186.3-816 216-816h528q29.7 0 50.85 21.15Q816-773.7 816-744v528q0 29.7-21.15 50.85Q773.7-144 744-144H216Zm0-72h528v-456H216v456Zm263.88-84Q406-300 348-340.5T264-444q26-63 84.12-103.5 58.11-40.5 132-40.5Q554-588 612-547.5T696-444q-26 63-84.12 103.5-58.11 40.5-132 40.5Zm.12-48q53 0 95.88-25.44Q618.76-398.88 643-444q-24.24-45.12-67.12-70.56Q533-540 480-540q-53 0-95.88 25.44Q341.24-489.12 317-444q24.24 45.12 67.12 70.56Q427-348 480-348Zm0-96Zm0 60q25 0 42.5-17.5T540-444q0-25-17.5-42.5T480-504q-25 0-42.5 17.5T420-444q0 25 17.5 42.5T480-384Z"/></svg></button>
-						<button	type="button" class="icon-button" on:click={saveAsPDF}><svg xmlns="http://www.w3.org/2000/svg" height="26px" viewBox="0 -960 960 960" width="26px" fill="#e8eaed"><path d="M360-456h48v-72h24q20.4 0 34.2-13.8Q480-555.6 480-576v-24q0-20.4-13.8-34.2Q452.4-648 432-648h-72v192Zm48-120v-24h24v24h-24Zm96 120h72q20.4 0 34.2-13.8Q624-483.6 624-504v-96q0-20.4-13.8-34.2Q596.4-648 576-648h-72v192Zm48-48v-96h24v96h-24Zm96 48h48v-72h48v-48h-48v-24h48v-48h-96v192ZM312-240q-29.7 0-50.85-21.15Q240-282.3 240-312v-480q0-29.7 21.15-50.85Q282.3-864 312-864h480q29.7 0 50.85 21.15Q864-821.7 864-792v480q0 29.7-21.15 50.85Q821.7-240 792-240H312Zm0-72h480v-480H312v480ZM168-96q-29.7 0-50.85-21.15Q96-138.3 96-168v-552h72v552h552v72H168Zm144-696v480-480Z"/></svg></button>
-						<button type="button" class="icon-button" on:click={printOS}><svg xmlns="http://www.w3.org/2000/svg" height="26px" viewBox="0 -960 960 960" width="26px" fill="#e8eaed"><path d="M640-640v-120H320v120h-80v-200h480v200h-80Zm-480 80h640-640Zm560 100q17 0 28.5-11.5T760-500q0-17-11.5-28.5T720-540q-17 0-28.5 11.5T680-500q0 17 11.5 28.5T720-460Zm-80 260v-160H320v160h320Zm80 80H240v-160H80v-240q0-51 35-85.5t85-34.5h560q51 0 85.5 34.5T880-520v240H720v160Zm80-240v-160q0-17-11.5-28.5T760-560H200q-17 0-28.5 11.5T160-520v160h80v-80h480v80h80Z"/></svg></button>
-						<button type="button" class="icon-button" on:click={saveOrder}><svg xmlns="http://www.w3.org/2000/svg" height="26px" viewBox="0 -960 960 960" width="26px" fill="#e8eaed"><path d="M480-96q-79 0-149-30t-122.5-82.5Q156-261 126-331T96-480q0-80 30-149.5t82.5-122Q261-804 331-834t149-30q63 0 120 19t105 54l-52 52q-37-26-81-39.5T480-792q-130 0-221 91t-91 221q0 130 91 221t221 91q130 0 221-91t91-221q0-21-3-41.5t-8-40.5l57-57q13 32 19.5 67t6.5 72q0 79-30 149t-82.5 122.5Q699-156 629.5-126T480-96Zm-55-211L264-468l52-52 110 110 387-387 51 51-439 439Z"/></svg></button>
+						<button type="button" class="icon-button" on:click={openPopup}>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								height="26px"
+								viewBox="0 -960 960 960"
+								width="26px"
+								fill="#e8eaed"
+							>
+								<path
+									d="M216-144q-29.7 0-50.85-21.15Q144-186.3 144-216v-528q0-29.7 21.15-50.85Q186.3-816 216-816h528q29.7 0 50.85 21.15Q816-773.7 816-744v528q0 29.7-21.15 50.85Q773.7-144 744-144H216Zm0-72h528v-456H216v456Zm263.88-84Q406-300 348-340.5T264-444q26-63 84.12-103.5 58.11-40.5 132-40.5Q554-588 612-547.5T696-444q-26 63-84.12 103.5-58.11 40.5-132 40.5Zm.12-48q53 0 95.88-25.44Q618.76-398.88 643-444q-24.24-45.12-67.12-70.56Q533-540 480-540q-53 0-95.88 25.44Q341.24-489.12 317-444q24.24 45.12 67.12 70.56Q427-348 480-348Zm0-96Zm0 60q25 0 42.5-17.5T540-444q0-25-17.5-42.5T480-504q-25 0-42.5 17.5T420-444q0 25 17.5 42.5T480-384Z"
+								/>
+							</svg>
+						</button>
+						<button type="button" class="icon-button" on:click={saveAsPDF}>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								height="26px"
+								viewBox="0 -960 960 960"
+								width="26px"
+								fill="#e8eaed"
+							>
+								<path
+									d="M360-456h48v-72h24q20.4 0 34.2-13.8Q480-555.6 480-576v-24q0-20.4-13.8-34.2Q452.4-648 432-648h-72v192Zm48-120v-24h24v24h-24Zm96 120h72q20.4 0 34.2-13.8Q624-483.6 624-504v-96q0-20.4-13.8-34.2Q596.4-648 576-648h-72v192Zm48-48v-96h24v96h-24Zm96 48h48v-72h48v-48h-48v-24h48v-48h-96v192ZM312-240q-29.7 0-50.85-21.15Q240-282.3 240-312v-480q0-29.7 21.15-50.85Q282.3-864 312-864h480q29.7 0 50.85 21.15Q864-821.7 864-792v480q0 29.7-21.15 50.85Q821.7-240 792-240H312Zm0-72h480v-480H312v480ZM168-96q-29.7 0-50.85-21.15Q96-138.3 96-168v-552h72v552h552v72H168Zm144-696v480-480Z"
+								/>
+							</svg>
+						</button>
+						<button type="button" class="icon-button" on:click={printOS}>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								height="26px"
+								viewBox="0 -960 960 960"
+								width="26px"
+								fill="#e8eaed"
+							>
+								<path
+									d="M640-640v-120H320v120h-80v-200h480v200h-80Zm-480 80h640-640Zm560 100q17 0 28.5-11.5T760-500q0-17-11.5-28.5T720-540q-17 0-28.5 11.5T680-500q0 17 11.5 28.5T720-460Zm-80 260v-160H320v160h320Zm80 80H240v-160H80v-240q0-51 35-85.5t85-34.5h560q51 0 85.5 34.5T880-520v240H720v160Zm80-240v-160q0-17-11.5-28.5T760-560H200q-17 0-28.5 11.5T160-520v160h80v-80h480v80h80Z"
+								/>
+							</svg>
+						</button>
+						<button type="button" class="icon-button" on:click={saveOrder}>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								height="26px"
+								viewBox="0 -960 960 960"
+								width="26px"
+								fill="#e8eaed"
+							>
+								<path
+									d="M480-96q-79 0-149-30t-122.5-82.5Q156-261 126-331T96-480q0-80 30-149.5t82.5-122Q261-804 331-834t149-30q63 0 120 19t105 54l-52 52q-37-26-81-39.5T480-792q-130 0-221 91t-91 221q0 130 91 221t221 91q130 0 221-91t91-221q0-21-3-41.5t-8-40.5l57-57q13 32 19.5 67t6.5 72q0 79-30 149t-82.5 122.5Q699-156 629.5-126T480-96Zm-55-211L264-468l52-52 110 110 387-387 51 51-439 439Z"
+								/>
+							</svg>
+						</button>
 					</div>
 				</div>
 			</div>
@@ -510,8 +649,6 @@
 	@import 'src/lib/styles/buttons.scss';
 	@import 'src/lib/styles/input.scss';
 	@import 'src/lib/styles/select.scss';
-
-
 
 	/* Estilos da Seção Principal */
 	section {
@@ -552,25 +689,55 @@
 					flex-direction: row;
 					align-items: center;
 					justify-content: center;
+					
 					gap: 10px;
 					width: 100%;
 					height: 100%;
 
+					#cars {
+						width: 50%;
+						height: 100%;
+					}
+
 					.form-details-vis {
 						display: flex;
-						width: 80%;
+						width: 100%;
 						height: 100%;
 						flex-direction: column;
 						align-items: flex-start;
 						justify-content: center;
 						padding: 10px;
+						overflow-y: scroll;
 						gap: 5px;
 						border: 1px solid $bordercolor;
 						border-radius: $radius;
-						overflow-y: auto;
-						min-height: 28vh;
-						max-height: 28vh;
+						min-height: 22vh;
+						max-height: 22vh;
 						background-color: $darker;
+					}
+
+					.form-km {
+						display: flex;
+						flex-direction: row;
+						align-items: center;
+						justify-content: center;
+						gap: 5px;
+						width: 100%;
+						height: 100%;
+
+						input {
+							width: 40%;
+							height: 40px;
+							padding: 5px;
+							border: 1px solid $bordercolor;
+							border-radius: $radius;
+						}
+
+						button {
+							width: 24%;
+							margin: 6px;
+							padding: 5px;
+						}
 					}
 				}
 			}
@@ -645,8 +812,9 @@
 			}
 
 			.total-container {
+				border-top: 1px solid $bordercolor;
 				display: flex;
-				justify-content: flex-end;
+				justify-content: space-between;
 				align-items: center;
 				padding: 0 10px;
 				font-size: 1.5rem;
@@ -657,7 +825,6 @@
 			.item {
 				button {
 					width: 24%;
-					// font-size: 30pt;
 					padding: 5px;
 				}
 			}
@@ -681,7 +848,6 @@
 	}
 
 	#clients,
-	#cars,
 	#parts {
 		width: 100%;
 		height: 100%;
