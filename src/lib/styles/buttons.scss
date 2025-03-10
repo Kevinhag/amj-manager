@@ -14,7 +14,7 @@ button {
 	transition: $transition;
 	border: 1px solid $bordercolor;
 
-/* 	&[disabled] {
+	&[disabled] {
 		background-color: #cccccc33;
 		color: grey;
 		cursor: default;
@@ -22,7 +22,7 @@ button {
 			background-color: #cccccc33;
 			color: grey;
 		}
-	} */
+	}
 
 	&:hover {
 		background-color: $color2;

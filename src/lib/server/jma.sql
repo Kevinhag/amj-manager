@@ -101,7 +101,7 @@ JOIN ordem_servico ON troca_peca.ordem_servico_id = ordem_servico.id
 JOIN carro ON ordem_servico.carro_id = carro.id
 JOIN cliente ON carro.cliente_id = cliente.id
 WHERE cliente.id = <id_do_cliente>
-  AND ordem_servico.data = '2024-01-30' -- Substitua com a data desejada
+  AND ordem_servico.data = '2024-01-30'
 GROUP BY cliente.id;
 
 -- Relatório mensal para todos os clientes
@@ -111,7 +111,7 @@ FROM troca_peca
 JOIN ordem_servico ON troca_peca.ordem_servico_id = ordem_servico.id
 JOIN carro ON ordem_servico.carro_id = carro.id
 JOIN cliente ON carro.cliente_id = cliente.id
-WHERE strftime('%Y', ordem_servico.data) = '2024' -- Substitua com o ano desejado
+WHERE strftime('%Y', ordem_servico.data) = '2024'
 GROUP BY cliente.id, mes;
 
 

@@ -1,18 +1,22 @@
 <script>
 	import { onMount } from 'svelte';
 	import { format } from 'date-fns';
+	import SelectList from '$lib/components/ListItem.svelte';
+	import ListItem from '$lib/components/ListItem.svelte';
+	import Notification from '$lib/components/Notification.svelte';
 
 	let clients = [];
+
 	let searchQuery = '';
 	let selectedClientId = null;
 	let selectedClient = null;
 	let serviceOrders = [];
 	let isLoadingClients = false;
 	let isLoadingOrders = false;
-	let message = '';
-	let type = 'info';
 
-	// Variáveis para o modal de edição
+	let notificationMessage = '';
+	let notificationType = 'info';
+
 	let showEditModal = false;
 	let osToEdit = null;
 	let editedOS = {};
@@ -20,6 +24,10 @@
 	onMount(() => {
 		fetchClients();
 	});
+
+	function selectClient(clientId) {
+		selectedClientId = clientId;
+	}
 
 	async function fetchClients() {
 		isLoadingClients = true;
@@ -30,7 +38,6 @@
 				console.error('Electron API not available');
 			}
 		} catch (error) {
-			console.error('Error fetching clients:', error);
 			showNotification('Erro ao buscar clientes: ' + error.message, 'error');
 		} finally {
 			isLoadingClients = false;
@@ -63,7 +70,6 @@
 				console.error('Electron API not available');
 			}
 		} catch (error) {
-			console.error('Error fetching service orders:', error);
 			showNotification('Erro ao buscar OS: ' + error.message, 'error');
 		} finally {
 			isLoadingOrders = false;
@@ -71,13 +77,35 @@
 	}
 
 	function formatDate(dateStr) {
-    return format(new Date(dateStr), 'dd/MM/yyyy');
-  }
+		return format(new Date(dateStr), 'dd/MM/yyyy');
+	}
 	function viewOS(os) {
 		const content = generateOSContent(os, true);
 		const newWindow = window.open('', '', 'width=800,height=600');
 		newWindow.document.write(content);
 		newWindow.document.close();
+	}
+
+	function printOS(os) {
+		const content = generateOSContent(os, false);
+		const printWindow = window.open('', '', 'width=1000,height=auto');
+		printWindow.document.write(content);
+		printWindow.document.close();
+
+		printWindow.onload = () => {
+			// Cria e insere um botão para que o usuário acione a impressão manualmente
+			const btnPrint = printWindow.document.createElement('button');
+			btnPrint.innerText = 'Imprimir';
+			btnPrint.style.position = 'fixed';
+			btnPrint.style.top = '10px';
+			btnPrint.style.right = '10px';
+			btnPrint.onclick = () => {
+				printWindow.print();
+				// Opcional: remova a linha abaixo se não quiser fechar a janela automaticamente
+				// printWindow.close();
+			};
+			printWindow.document.body.insertBefore(btnPrint, printWindow.document.body.firstChild);
+		};
 	}
 
 	function exportOSToPDF(os) {
@@ -90,135 +118,159 @@
 	}
 
 	function generateOSContent(os, isPreview) {
-    // Calcula o valor total dos itens
-    const totalValue = os.itens.reduce(
-      (sum, item) => sum + item.preco_unitario * item.quantidade,
-      0
-    );
+		const totalValue = os.itens.reduce(
+			(sum, item) => sum + item.preco_unitario * item.quantidade,
+			0,
+		);
 
-    return `
-      <!DOCTYPE html>
-      <html lang="pt-BR">
-      <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Auto Mecânica Jorge</title>
-        <style>
-          body {
-            font-family: 'Arial', sans-serif;
-          }
-          .container {
-            width: 95%;
-            margin: 0 auto;
-            padding: 10px;
-            border: 1px solid #333;
-          }
-          .header {
-            text-align: center;
-          }
-          .header h1 {
-            margin: 0;
-          }
-          .header p {
-            margin: 5px 0;
-          }
-          .info,
-          .table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-          }
-          .info td {
-            padding: 5px;
-          }
-          .table th,
-          .table td {
-            border: 1px solid #000;
-            padding: 8px;
-            text-align: left;
-          }
-          .signature {
-            margin-top: 20px;
-            display: flex;
-            justify-content: space-between;
-          }
-          .qtt {
-            width: 100px;
-          }
-          .preco {
-            width: 120px;
-          }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <h1>AUTO MECÂNICA JORGE</h1>
-            <p>JTCS Auto Mecânica Ltda. - ME</p>
-            <p>Rua Virgílio Pedro Rubini, 1670 - Barra do Rio Cerro</p>
-            <p>CEP 89260-190 - Jaraguá do Sul - Santa Catarina</p>
-            <p>Fone: (47) 3376-0444</p>
-          </div>
-          <table class="info">
-            <tr>
-              <td><strong>Cliente:</strong> ${selectedClient?.nome || 'N/A'}</td>
-              <td><strong>Data:</strong> ${formatDate(os.data)}</td>
-            </tr>
-            <tr>
-              <td><strong>Fone:</strong> ${selectedClient?.tel || 'N/A'}</td>
-              <td><strong>Observações:</strong> ${os.observacao || 'Nenhuma'}</td>
-            </tr>
-            <tr>
-              <td><strong>Carro:</strong> ${os.marca || 'N/A'}</td>
-              <td><strong>Modelo:</strong> ${os.modelo || 'N/A'}</td>
-            </tr>
-            <tr>
-              <td colspan="2"><strong>Placa:</strong> ${os.placa || 'N/A'}</td>
-            </tr>
-            ${isPreview ? `<tr>
-              <td colspan="2"><strong>Kilometragem:</strong> ${os.km || 'N/A'}</td>
-            </tr>` : ''}
-          </table>
-          <table class="table">
-            <thead>
-              <tr>
-                <th>Nome da Peça</th>
-                <th class="qtt">Quantidade</th>
-                <th class="preco">Preço</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${os.itens.map(
-                (item) => `
-                <tr>
-                  <td>${item.nome_peca}</td>
-                  <td>${item.quantidade}</td>
-                  <td>R$ ${item.preco_unitario.toFixed(2)}</td>
-                </tr>
-              `
-              ).join('')}
-            </tbody>
-          </table>
-          <br>
-          <div class="signature">
-            <div>Assinatura: _______________________________________________</div>
-            <div>TOTAL R$ ${totalValue.toFixed(2)}</div>
-          </div>
-        </div>
-      </body>
+		return /* html */ `<!DOCTYPE html>
+<html lang="pt-BR">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Auto Mecânica Jorge</title>
+	</head>
+	<body>
+		<div class="container">
+			<div class="header">
+				<h1>AUTO MECÂNICA JORGE</h1>
+				<p>JTCS Auto Mecânica Ltda. - ME</p>
+				<p>Rua Virgílio Pedro Rubini, 1670 - Barra do Rio Cerro</p>
+				<p>CEP 89260-190 - Jaraguá do Sul - Santa Catarina</p>
+				<p>Fone: (47) 3376-0444</p>
+			</div>
+			<table class="info">
+				<tr>
+					<td>
+						<strong>Cliente:</strong>
+						${selectedClient?.nome || 'N/A'}
+					</td>
+					<td>
+						<strong>Data:</strong>
+						${formatDate(os.data)}
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<strong>Fone:</strong>
+						${selectedClient?.tel || 'N/A'}
+					</td>
+					<td>
+						<strong>Observações:</strong>
+						${os.observacao || 'Nenhuma'}
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<strong>Carro:</strong>
+						${os.marca || 'N/A'}
+					</td>
+					<td>
+						<strong>Modelo:</strong>
+						${os.modelo || 'N/A'}
+					</td>
+				</tr>
+				<tr>
+					<td colspan="2">
+						<strong>Placa:</strong>
+						${os.placa || 'N/A'}
+					</td>
+				</tr>
+				${
+					isPreview
+						? `<tr>
+                        <td colspan="2"><strong>Kilometragem:</strong> ${os.os_km || 'N/A'}</td>
+                  </tr>`
+						: ''
+				}
+			</table>
+			<table class="table">
+				<thead>
+					<tr>
+						<th>Nome da Peça</th>
+						<th class="qtt">Quantidade</th>
+						<th class="preco">Preço</th>
+					</tr>
+				</thead>
+				<tbody>
+					${os.itens
+						.map(
+							(item) => `
+                      <tr>
+                          <td>${item.nome_peca}</td>
+                          <td>${item.quantidade}</td>
+                          <td>R$ ${item.preco_unitario.toFixed(2)}</td>
+                      </tr>`,
+						)
+						.join('')}
+				</tbody>
+			</table>
+			<br />
+			<div class="signature">
+				<div>Assinatura: _______________________________________________</div>
+				<div>TOTAL R$ ${totalValue.toFixed(2)}</div>
+			</div>
+		</div>
+	</body>
+	<style>
+		/* Estilos gerais para tela */
+		body {
+			font-family: 'Arial', sans-serif;
+			background-color: #fff;
+			color: #000;
+		}
+		.container {
+			width: 95%;
+			height: 95%;
+			margin: 0 auto;
+			padding: 10px;
+			border: 1px solid #333;
+		}
+		.header {
+			text-align: center;
+		}
+		.header h1 {
+			margin: 0;
+		}
+		.header p {
+			margin: 5px 0;
+		}
+		.info,
+		.table {
+			width: 100%;
+			border-collapse: collapse;
+			margin-top: 20px;
+		}
+		.info td {
+			padding: 5px;
+		}
+		.table th,
+		.table td {
+			border: 1px solid #000;
+			padding: 8px;
+			text-align: left;
+		}
+		.signature {
+			margin-top: 20px;
+			display: flex;
+			justify-content: space-between;
+		}
+		.qtt {
+			width: 100px;
+		}
+		.preco {
+			width: 120px;
+		}
+
+		/* Estilos específicos para impressão */
+		
+	</style>
+
+
       </html>
     `;
-  }
-
-	function showNotification(msg, msgType) {
-		message = msg;
-		type = msgType;
-		setTimeout(() => {
-			message = '';
-		}, 3000);
 	}
 
-	// Função para editar OS
 	function editOS(os) {
 		osToEdit = os;
 		editedOS = {
@@ -273,6 +325,7 @@
 				carro_id: editedOS.carro_id,
 				observacao: editedOS.observacao.toUpperCase(),
 				data: editedOS.data,
+				os_km: editedOS.os_km,
 				valor_total: editedOS.valor_total,
 				forma_pagamento: editedOS.forma_pagamento.toUpperCase(),
 				itens: editedOS.itens.map((item) => ({
@@ -298,76 +351,82 @@
 			showNotification('Erro ao atualizar OS: ' + error.message, 'error');
 		}
 	}
+
+	function showNotification(message, type) {
+		notificationMessage = message;
+		notificationType = type;
+		setTimeout(() => {
+			notificationMessage = '';
+		}, 3000);
+	}
 </script>
 
-<section>
-	<h2>Consulta de OS</h2>
-	<div class="form-main">
-		<div class="client-list">
-			<input
-				type="text"
-				placeholder="Pesquisar Cliente (Nome, CPF, Telefone)"
-				bind:value={searchQuery}
-				on:input={(e) => (searchQuery = e.target.value.toUpperCase())}
-			/>
-
-			{#if isLoadingClients}
-				<p>Carregando clientes...</p>
-			{:else if filteredClients.length > 0}
-				<ul>
-					{#each filteredClients as client}
-						<li>
-							<button
-								class:selected={client.id === selectedClientId}
-								on:click={() => (selectedClientId = client.id)}
-							>
-								{client.nome.toUpperCase()} - {client.cpf}
-							</button>
-						</li>
+<section class="form-main">
+	<h2 class="title-list">Consultar OS:</h2>
+	<input
+		type="text"
+		placeholder="Pesquisar Cliente (Nome, CPF, Telefone)"
+		bind:value={searchQuery}
+		on:input={(e) => (searchQuery = e.target.value.toUpperCase())}
+	/>
+	<div class="client-list">
+		<div class="list-container">
+			<!-- <div style="position: absolute;">teste</div> -->
+			<div class="list">
+				{#if isLoadingClients}
+					<p>Carregando clientes...</p>
+				{:else if filteredClients.length > 0}
+					{#each filteredClients as client, i}
+						<ListItem
+							datatype="client"
+							index={i}
+							display={['#' + client.id, client.nome.toUpperCase(), client.cpf]}
+							toggled={client.id === selectedClientId}
+							onselect={() => selectClient(client.id)}
+						/>
 					{/each}
-				</ul>
-			{:else}
-				<p>Nenhum cliente encontrado.</p>
-			{/if}
-		</div>
-
-		<div class="service-orders">
-			{#if selectedClient}
-				<h2>OS de {selectedClient.nome.toUpperCase()}</h2>
-				{#if isLoadingOrders}
-					<p>Carregando OS...</p>
-				{:else if serviceOrders.length > 0}
-					<table>
-						<thead>
-							<tr>
-								<th>ID</th>
-								<th>Data</th>
-								<th>Valor Total</th>
-								<th>Ações</th>
-							</tr>
-						</thead>
-						<tbody>
-							{#each serviceOrders as os}
-								<tr>
-									<td>{os.id}</td>
-									<td>{formatDate(os.data)}</td>
-									<td>R$ {os.valor_total.toFixed(2)}</td>
-									<td>
-										<button on:click={() => viewOS(os)}>Visualizar</button>
-										<button on:click={() => exportOSToPDF(os)}>
-											Exportar PDF
-										</button>
-										<button on:click={() => editOS(os)}>Editar</button>
-									</td>
-								</tr>
-							{/each}
-						</tbody>
-					</table>
 				{:else}
-					<p>Este cliente não possui OS.</p>
+					<p>Nenhum cliente encontrado.</p>
 				{/if}
-			{/if}
+			</div>
 		</div>
+	</div>
+
+	<div class="service-orders">
+		{#if selectedClient}
+			<h2 class="title-os">OS de {selectedClient.nome.toUpperCase()}</h2>
+			{#if isLoadingOrders}
+				<p>Carregando OS...</p>
+			{:else if serviceOrders.length > 0}
+				<table>
+					<thead>
+						<tr>
+							<th>ID</th>
+							<th>Data</th>
+							<th>Valor Total</th>
+							<th>Ações</th>
+						</tr>
+					</thead>
+					<tbody>
+						{#each serviceOrders as os}
+							<tr>
+								<td>{os.id}</td>
+								<td>{formatDate(os.data)}</td>
+								<td>R$ {os.valor_total.toFixed(2)}</td>
+								<td>
+									<button on:click={() => viewOS(os)}>Visualizar</button>
+									<button on:click={() => exportOSToPDF(os)}>Exportar PDF</button>
+									<button on:click={() => printOS(os)}>Imprimir OS</button>
+									<button on:click={() => editOS(os)}>Editar</button>
+								</td>
+							</tr>
+						{/each}
+					</tbody>
+				</table>
+			{:else}
+				<p>Este cliente não possui OS.</p>
+			{/if}
+		{/if}
 	</div>
 
 	{#if showEditModal}
@@ -375,12 +434,8 @@
 			<div class="modal-content">
 				<h2>Editar Ordem de Serviço #{editedOS.id}</h2>
 				<form on:submit|preventDefault={saveEditedOS}>
-					<!-- <div>
-						<label>Data:</label>
-						<input type="date" bind:value={editedOS.data} />
-					</div> -->
 					<div>
-						<label>Observação:</label>
+						<label for="">Observação:</label>
 						<textarea
 							rows="4"
 							cols="50"
@@ -389,7 +444,7 @@
 						/>
 					</div>
 					<div>
-						<label>Forma de Pagamento:</label>
+						<label for="">Forma de Pagamento:</label>
 						<input type="text" bind:value={editedOS.forma_pagamento} />
 					</div>
 					<h3>Itens</h3>
@@ -475,109 +530,92 @@
 		</div>
 	{/if}
 
-	{#if message}
-		<div class={`notification ${type}`}>
-			{message}
+	{#if notificationMessage}
+		<div class={`notification ${notificationType}`}>
+			{notificationMessage}
 		</div>
 	{/if}
 </section>
 
 <style lang="scss">
-	@import 'src/lib/styles/input.scss';
-
-	section {
-		display: grid;
-		grid-template-rows: repeat(2, 1fr);
-		gap: 1rem;
-		width: 100%;
-		height: 100%;
-		padding: 10px;
-		color: #ffffff;
-		font-family: 'Arial', sans-serif;
-	}
+	// @import 'src/lib/styles/input.scss';
+	@import 'src/lib/styles/mixins.scss';
 
 	.form-main {
+		@include container-base;
 		display: grid;
-		grid-template-columns: 1fr 2fr;
-		gap: 20px;
-		width: 100%;
+		grid-auto-columns: 1fr;
+		grid-auto-rows: max-content max-content auto;
+		grid-template-areas:
+			'a a'
+			'b c'
+			'd c';
 		height: 100%;
-	}
+		gap: $gap;
 
-	.client-list {
-		display: flex;
-		flex-direction: column;
-		gap: 10px;
-		max-height: 80vh;
+		h2 {
+			grid-area: a;
+			text-align: center;
+		}
 
-		ul {
-			list-style: none;
-			padding: 0;
-			margin: 0;
+		input {
+			grid-area: b;
+			@include form-input;
+		}
 
+		.client-list {
+			grid-area: d;
+			display: grid;
+			gap: $gap;
 			overflow-y: auto;
 
-			li {
-				margin-bottom: 0px;
+			.list-container {
+				border: 1px solid $bordercolor;
+				border-radius: 5px;
+				align-items: start;
+				overflow-y: auto;
+			}
+		}
 
-				button {
-					width: 100%;
+		.service-orders {
+			grid-area: c;
+			display: grid;
+			grid-template-areas:
+				'a'
+				'b';
+			gap: $gap;
+			height: 50px;
+
+			.title-os {
+				grid-area: a;
+				margin: 0;
+			}
+
+			table {
+				width: 100%;
+				border-collapse: collapse;
+
+				th,
+				td {
+					border: 1px solid $bordercolor;
 					padding: 8px;
 					text-align: left;
-					background-color: $bgcolor;
-					border: 1px solid $bordercolor;
-					margin: 0;
-					color: $maintextcolor;
-					cursor: pointer;
+				}
 
-					&.selected {
-						background-color: $lighter;
-						border: 1px solid $color2;
-					}
+				th {
+					background-color: $bgcolor;
+				}
+
+				button {
+					background-color: #282828;
+					border: 1px solid $bordercolor;
+					padding: 5px 10px;
+					border-radius: $radiussmall;
+					cursor: pointer;
 
 					&:hover {
 						background-color: #444;
 					}
-				}
-			}
-		}
-	}
-
-	.service-orders {
-		display: flex;
-		flex-direction: column;
-		gap: 10px;
-
-		h2 {
-			margin-top: 0;
-		}
-
-		table {
-			width: 100%;
-			border-collapse: collapse;
-			color: #fff;
-
-			th,
-			td {
-				border: 1px solid #555;
-				padding: 8px;
-				text-align: left;
-			}
-
-			th {
-				background-color: #333;
-			}
-
-			button {
-				background-color: #282828;
-				color: #ffffff;
-				border: 1px solid #555;
-				padding: 5px 10px;
-				border-radius: 5px;
-				cursor: pointer;
-
-				&:hover {
-					background-color: #444;
 				}
 			}
 		}

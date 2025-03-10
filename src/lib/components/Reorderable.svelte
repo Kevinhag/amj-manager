@@ -1,9 +1,4 @@
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte';
-	import { onMount } from 'svelte';
-
-	const dispatch = createEventDispatcher();
-
 	export let list: Array<{ key: string; nome: string; quantidade: number; preco: number }> = [];
 	export let update = (v: any) => {};
 
@@ -94,7 +89,7 @@
 
 	function updateQuantity(i: number, value: string) {
 		const numericValue = parseInt(value);
-		list[i].quantidade = isNaN(numericValue) || numericValue === 0 ? "" : numericValue;
+		list[i].quantidade = isNaN(numericValue) || numericValue === 0 ? '' : numericValue;
 		update(list);
 	}
 
@@ -103,10 +98,6 @@
 		list[i].preco = isNaN(numericValue) ? 0 : numericValue;
 		update(list);
 	}
-
-	function getTotal(item) {
-        return item.quantidade * item.preco;
-    }
 
 	function currencyFormat(currency: number) {
 		return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
@@ -126,78 +117,33 @@
 		<div bind:this={marker} class="marker" />
 
 		{#each list as item, i}
-		
-			<div
-				class="item"
-				draggable={false}
-				id={item.key}
-				on:dragstart|self={pickItem}
-				on:touchstart|self={(e) => pickItem(e, true)}
-			>
-				<div>#{i + 1}</div>
+			<div class="item" draggable={false} id={item.key} on:dragstart|self={pickItem} on:touchstart|self={(e) => pickItem(e, true)}>
+				<div class="id">#{i + 1}</div>
 				<div class="text" title="Edit">{item.nome}</div>
-				<input
-					type="number"
-					name="quantity"
-					id="quantity"
-					min="0"
-					value={item.quantidade === "" ? "" : item.quantidade}
-					on:input={(e) => updateQuantity(i, e.target.value)}
+				<input type="number" name="quantity" id="quantity-{i}" min="0" value={item.quantidade === '' ? '' : item.quantidade} on:input={(e) => updateQuantity(i, e.target.value)}/>
 
-				/>
-				
-				 {#if item.quantidade !== 0}
-				<input
-					type="text"
-					name="price"
-					id="price"
-					min="0"
-					step="10"
-					value={currencyFormat(item.preco)}
-					on:input={(e) => updatePrice(i, e.target.value)}
-					
-				/>
+				{#if item.quantidade !== 0}
+					<input
+						type="text"
+						name="price"
+						id="price-{i}"
+						min="0"
+						step="10"
+						value={currencyFormat(item.preco)}
+						on:input={(e) => updatePrice(i, e.target.value)}
+					/>
 				{/if}
 				{#if item.quantidade === 0}
-				<input
-					type="text"
-					name="price"
-					id="price"
-					min="0"
-					step="10"
-					disabled
-				/>
+					<input type="text" name="price" id="price" min="0" step="10" disabled />
 				{/if}
-<!-- 				<input
-					type="text"
-					name="totalprice"
-					id="totalprice"
-					readonly
-					value={currencyFormat(getTotal(item))}
-				/> -->
 				<button on:click={() => RemoveItem(i)}>DEL</button>
-
 			</div>
 		{/each}
 	</div>
 </div>
-<!-- <div>
-	<div class="item locked">
-		<div class="text">Total</div>
-		<div />
-		<div />
-		<div />
-		<div class="text">
-			{currencyFormat(list.reduce((acc, item) => acc + getTotal(item), 0))}
-		</div>
-	</div>
-</div> -->
 
 <style lang="scss">
-	@import 'src/lib/styles/buttons.scss';
-	div {
-		box-sizing: border-box;
-	}
+	@import 'src/lib/styles/mixins.scss';
 
 	.container,
 	.component {
@@ -211,48 +157,56 @@
 		padding: 2px;
 	}
 
-	button {
-		height: 30px;
-		padding: 0;
-		width: auto;
-		margin-top: 0;
-	}
-	input[type='text'],
-	input[type='number'] {
-		
-		margin: 0px;
-		padding: 0px;
-		width: 100%;
-		height: 28px;
-		border: none;
-		text-align: center;
-		border-radius: 5px;
-		border: 1px solid $bordercolor;
-	}
-
 	.item {
 		text-transform: uppercase;
 		display: grid;
-		grid-template-columns: 5% 40% 10% 20% 15%;
+		grid-template-columns: max-content auto max-content max-content max-content;
 		user-select: none;
-		gap: 5px;
+		gap: 10px;
+		padding: 0 10px;
 		width: 100%;
 		min-height: 32px;
-		border-radius: 2px;
 		align-items: center;
-		font-size: 90%;
+		font-size: 14px;
+
+		&:nth-child(even) {
+			background: $lighter;
+		}
+
+		.id {
+			border-right: 1px solid $bordercolor;
+			padding-right: 10px;
+		}
+
+		input[type='text'] {
+			@include form-input;
+			height: 28px;
+			width: 120px;
+			text-align: center;
+			border-radius: 5px;
+		}
+
+		input[type='number'] {
+			@include form-input;
+			height: 28px;
+			width: 60px;
+			text-align: center;
+			border-radius: 5px;
+		}
+
+		button {
+			@include button-base;
+			border-radius: 5px;
+			height: 30px;
+			padding: 0;
+			width: 60px;
+			margin-top: 0;
+		}
 	}
 
-/* 	.item.locked {
+	/* 	.item.locked {
 		background: #60606010;
 	} */
-
-	.item div {
-		width: 100%;
-		height: 100%;
-		display: flex;
-		align-items: center;
-	}
 
 	.text {
 		padding: 0px 4px;
