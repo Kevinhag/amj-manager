@@ -1,9 +1,11 @@
 <script>
 	import { onMount } from 'svelte';
-	import { format, parseISO } from 'date-fns';
+	import { format, isWithinInterval, parseISO } from 'date-fns';
 	import Notification from '$lib/components/Notification.svelte';
+	import { text } from '@sveltejs/kit';
+	import { blank_object } from 'svelte/internal';
 
-	let reportType = 'daily'; // 'daily', 'monthly', 'annual', 'custom', 'client'
+	let reportType = 'client'; // 'daily', 'monthly', 'annual', 'custom', 'client'
 	let selectedDate = '';
 	let selectedMonth = '';
 	let selectedYear = new Date().getFullYear();
@@ -15,9 +17,9 @@
 	let type = 'info'; // 'info', 'error', 'success'
 	let clients = [];
 	let selectedClientId = null;
+	let reportHTML = null;
 
 	onMount(async () => {
-
 		const today = new Date();
 		selectedDate = today.toISOString().split('T')[0];
 		selectedMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
@@ -35,6 +37,8 @@
 				showNotification('Erro ao carregar clientes: ' + error.message, 'error');
 			}
 		}
+
+		await generateReport();
 	});
 
 	async function generateReport() {
@@ -94,6 +98,9 @@
 					valorTotal: item.valorTotal,
 					formaPagamento: item.formaPagamento,
 					observacao: item.observacao,
+					obsRetifica: item.obsRetifica,
+					os_km: item.os_km,
+
 					carro: {
 						modelo: item.carro_modelo,
 						marca: item.carro_marca,
@@ -123,116 +130,13 @@
 		return format(parseISO(dateStr), 'dd/MM/yyyy');
 	}
 
-	function generateReportHTML() {
-		const totalGeral = reportData.reduce(
-			(sum, client) => sum + client.osList.reduce((osSum, os) => osSum + os.valorTotal, 0),
-			0,
-		);
-
-		const clientSections = reportData
-			.map(
-				(client) => `
-		<title>Auto Mecânica Jorge</title>
-		<h1>Relatório ${getReportTitle()}</h1>
-		<h3>${client.nome_cliente}</h3>
-		<p>Telefone: ${client.telefone}</p>
-		<p>CPF: ${client.cpf}</p>
-		${client.osList
-			.map(
-				(os) => `
-		  <h4>Ordem de Serviço #${os.osId}</h4>
-		  <p>Data: ${formatDate(os.data)}</p>
-		  <p>Carro: ${os.carro.marca} ${os.carro.modelo} - Placa: ${os.carro.placa}</p>
-		  <p>Forma de Pagamento: ${os.formaPagamento}</p>
-		  ${os.observacao ? `<p>Observação: ${os.observacao}</p>` : ''}
-		  ${
-				os.itens.length > 0
-					? `
-		  <table>
-			<thead>
-			  <tr>
-				<th>Item</th>
-				<th>Quantidade</th>
-				<th>Preço Unitário</th>
-				<th>Total</th>
-			  </tr>
-			</thead>
-			<tbody>
-			  ${os.itens
-					.map(
-						(item) => `
-				<tr>
-				  <td>${item.nome}</td>
-				  <td>${item.quantidade}</td>
-				  <td>R$ ${item.preco.toFixed(2)}</td>
-				  <td>R$ ${(item.quantidade * item.preco).toFixed(2)}</td>
-				</tr>
-			  `,
-					)
-					.join('')}
-			</tbody>
-		  </table>
-		  `
-					: ''
-			}
-		  <p>Total da OS: R$ ${os.valorTotal.toFixed(2)}</p>
-		`,
-			)
-			.join('')}
-	  `,
-			)
-			.join('');
-
-		return `
-		<html lang="pt-BR">
-		<head>
-		  <meta charset="UTF-8">
-		  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-		  <title>Auto Mecânica Jorge</title>
-		  <style>
-			body { font-family: 'Roboto', sans-serif; margin: 20px; }
-			h1 { text-align: center; }
-			h3 { margin-top: 30px; }
-			h4 { margin-top: 20px; }
-			table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-			th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-			th { background-color: #f2f2f2; }
-			.total-geral { text-align: right; margin-top: 20px; font-size: 1.2em; }
-		  </style>
-		</head>
-		<body>
-		  <h1>Relatório ${getReportTitle()}</h1>
-		  ${clientSections}
-		  <h2 class="total-geral">Total Geral: R$ ${totalGeral.toFixed(2)}</h2>
-		</body>
-		</html>
-	  `;
-	}
-
-	function getReportTitle() {
-		switch (reportType) {
-			case 'daily':
-				return `Diário - ${formatDate(selectedDate)}`;
-			case 'monthly':
-				return `Mensal - ${selectedMonth}`;
-			case 'annual':
-				return `Anual - ${selectedYear}`;
-			case 'custom':
-				return `De ${formatDate(startDate)} até ${formatDate(endDate)}`;
-			case 'client':
-				const selectedClient = clients.find((client) => client.id === selectedClientId);
-				return `Cliente - ${selectedClient ? selectedClient.nome : ''}`;
-			default:
-				return '';
-		}
-	}
-
 	function exportToPDF() {
 		if (reportData.length === 0) {
 			showNotification('Gere um relatório antes de exportar.', 'info');
 			return;
 		}
-		const content = generateReportHTML();
+		const content = reportHTML.innerHTML;
+
 		if (window.electron) {
 			window.electron.printToPDF(content);
 		} else {
@@ -332,74 +236,244 @@
 			<Notification {message} {type} />
 		{/if}
 
-		<div class="report">
+		{#if isLoading}
+			<p>Carregando...</p>
+		{/if}
+
+		<div class="report-html" bind:this={reportHTML}>
 			{#if reportData.length > 0}
-				<div class="report-content">
-					{#each reportData as client}
-						<div class="client-section">
-							<h3>{client.nome_cliente}</h3>
-							<p>Telefone: {client.telefone}</p>
-							<p>CPF: {client.cpf}</p>
+				<div class="report">
+					{#if reportData.length > 0}
+						<div class="report-content">
+							<div class="header">
+								<h1>AUTO MECÂNICA JORGE</h1>
+								<p>JTCS Auto Mecânica Ltda. - ME</p>
+								<p>Rua Virgílio Pedro Rubini, 1670 - Barra do Rio Cerro</p>
+								<p>CEP 89260-190 - Jaraguá do Sul - Santa Catarina</p>
+								<p>Fone: (47) 3376-0444</p>
+							</div>
+							{#each reportData as client}
+								<div class="client-section">
+									<br />
+									<div class="separator" />
 
-							{#each client.osList as os}
-								<div class="os-section">
-									<h4>Ordem de Serviço #{os.osId}</h4>
-									<p>Data: {formatDate(os.data)}</p>
-									<p>
-										Carro: {os.carro.marca}
-										{os.carro.modelo} - Placa: {os.carro.placa}
-									</p>
-									<p>Forma de Pagamento: {os.formaPagamento}</p>
-									{#if os.observacao}
-										<p>Observação: {os.observacao}</p>
-									{/if}
+									<div class="client-info">
+										<h2>{client.nome_cliente}</h2>
+										<p>Telefone: {client.telefone}</p>
+										<p>CPF: {client.cpf}</p>
+									</div>
 
-									{#if os.itens.length > 0}
-										<table>
-											<thead>
-												<tr>
-													<th>Item</th>
-													<th>Quantidade</th>
-													<th>Preço Unitário</th>
-													<th>Total</th>
-												</tr>
-											</thead>
-											<tbody>
-												{#each os.itens as item}
+									<div class="separator" />
+
+									{#each client.osList as os}
+										<div class="os-section">
+											<div>
+												<h3>Ordem de Serviço #{os.osId}</h3>
+												<h5>Data: {formatDate(os.data)}</h5>
+											</div>
+
+											<br />
+											<div class="car-info">
+												Carro: <span>{os.carro.marca} {os.carro.modelo}</span>
+												<br>
+												Placa: <span>{os.carro.placa}</span>
+												<br>
+												KM: <span>{os.os_km}</span>	
+											</div>
+											<br />
+											<table>
+												<thead>
 													<tr>
-														<td>{item.nome}</td>
-														<td>{item.quantidade}</td>
-														<td>R$ {item.preco.toFixed(2)}</td>
-														<td>
-															R$ {(
-																item.quantidade * item.preco
-															).toFixed(2)}
-														</td>
+														<th>Item</th>
+														<th class="qtt">Quantidade</th>
+														<th class="preco">Preço Unitário</th>
+														<th>Total</th>
 													</tr>
-												{/each}
-											</tbody>
-										</table>
-									{/if}
+												</thead>
+												<tbody>
+													{#each os.itens as item}
+														<tr>
+															<td>{item.nome}</td>
+															<td>{item.quantidade}</td>
+															<td>R$ {item.preco.toFixed(2)}</td>
+															<td>
+																R$ {(
+																	item.quantidade * item.preco
+																).toFixed(2)}
+															</td>
+														</tr>
+													{/each}
+												</tbody>
+											</table>
 
-									<p>Total da OS: R$ {os.valorTotal.toFixed(2)}</p>
+											{#if os.observacao}
+												<p>Observação: {os.observacao}</p>
+											{/if}
+											{#if os.obsRetifica}
+												<p>Retífica: {os.obsRetifica}</p>
+											{/if}
+
+											<div>
+												<p>Forma de Pagamento: {os.formaPagamento}</p>
+												<p>Total da OS: R$ {os.valorTotal.toFixed(2)}</p>
+											</div>
+										</div>
+										<div class="separator" />
+									{/each}
 								</div>
 							{/each}
+							<h2 class="total-geral">
+								Total Geral: R$ {reportData
+									.reduce(
+										(sum, client) =>
+											sum +
+											client.osList.reduce(
+												(osSum, os) => osSum + os.valorTotal,
+												0,
+											),
+										0,
+									)
+									.toFixed(2)}
+							</h2>
 						</div>
-					{/each}
-					<h2 class="total-geral">
-						Total Geral: R$ {reportData
-							.reduce(
-								(sum, client) =>
-									sum +
-									client.osList.reduce((osSum, os) => osSum + os.valorTotal, 0),
-								0,
-							)
-							.toFixed(2)}
-					</h2>
+					{:else if !isLoading}
+						<p>Nenhum dado disponível.</p>
+					{/if}
 				</div>
 			{:else if !isLoading}
 				<p>Nenhum dado disponível.</p>
 			{/if}
+			<style lang="scss">
+				:root {
+					background-color: white;
+				}
+
+				.total-geral {
+					text-align: right;
+					margin-top: 20px;
+					font-size: 16pt;
+					font-weight: bold;
+				}
+
+				.separator {
+					margin: 20px 0 !important;
+					width: 100%;
+					height: 1px;
+					background-color: $lighter;
+				}
+
+				.report {
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					background-color: white !important;
+					width: 100%;
+					color: black;
+					border: 1px solid $bordercolor;
+				}
+
+				.report-content {
+					background-color: white !important;
+					width: 100%;
+					height: 100%;
+					padding: 100px;
+				}
+
+				.header {
+					text-align: center;
+					margin-bottom: 20px;
+				}
+
+				.header h1 {
+					font-size: 26pt;
+					margin-bottom: 5px;
+				}
+
+				.header p {
+					font-size: 12pt;
+					font-weight: bold;
+					margin: 0;
+				}
+
+				.signature {
+					margin-top: 20px;
+					display: flex;
+					justify-content: space-between;
+				}
+
+				.qtt {
+					width: 100px;
+				}
+
+				.preco {
+					width: 120px;
+				}
+
+				.client-section {
+					margin-bottom: 30px;
+
+					h3 {
+						margin-top: 20px;
+					}
+				}
+
+				.client-info {
+					display: flex;
+					flex-direction: column;
+					align-items: center;
+					text-align: center;
+				}
+
+				.car-info {
+					text-align: center;
+					font-size: 12pt;
+					margin-top: 5px;
+					font-weight: bold;
+				}
+
+				.car-info span {
+					font-weight: normal;
+				}
+
+				h3 {
+					text-align: center;
+				}
+
+				h5 {
+					text-align: center;
+					margin-top: 5px;
+				}
+				.os-section {
+					margin-top: 20px;
+
+					h4 {
+						margin-bottom: 5px;
+					}
+				}
+				table {
+					width: 100%;
+					border-collapse: collapse;
+					margin-top: 10px;
+				}
+
+				th,
+				td {
+					border: 1px solid $bordercolor !important;
+					padding: 5px 10px !important;
+					text-align: left;
+				}
+				th {
+					background-color: $bgcolor;
+					color: white;
+				}
+				tr {
+					color: black;
+					background-color: #22222211;
+				}
+				tr:nth-child(even) {
+					background-color: #22222233;
+				}
+			</style>
 		</div>
 	</div>
 </section>
@@ -416,34 +490,22 @@
 	.report-container {
 		display: flex;
 		flex-direction: column;
+		align-items: center;
 		gap: 20px;
 		width: 100%;
 		height: 100%;
+	}
 
-		.report {
-			background-color: $darker;
-			border: 1px solid $bordercolor;
-			border-radius: $radius;
-			// padding: 20px;
-			overflow-y: hidden;
-
-			display: flex;
-			flex-direction: column;
-			gap: 20px;
-			width: 70%;
-			height: 100%;
-
-			.report-content {
-				background-color: white;
-				color: black;
-				overflow-y: auto;
-				max-width: 60%;
-				max-height: 100%;
-				border: 1px solid $color2;
-				border-radius: $radius;
-				padding: 10px;
-			}
-		}
+	.report-html {
+		border: 1px solid $bordercolor;
+		border-radius: $radius;
+		background-color: $darker;
+		overflow-y: auto;
+		display: flex;
+		flex-direction: column;
+		gap: 20px;
+		width: 70%;
+		height: 100%;
 	}
 
 	h2 {
@@ -502,44 +564,6 @@
 		display: flex;
 		gap: 10px;
 		justify-content: center;
-	}
-
-	.client-section {
-		margin-bottom: 30px;
-
-		h3 {
-			margin-top: 20px;
-		}
-
-		.os-section {
-			margin-top: 20px;
-
-			h4 {
-				margin-bottom: 5px;
-			}
-
-			table {
-				width: 100%;
-				border-collapse: collapse;
-				margin-top: 10px;
-				color: $maintextcolor;
-
-				th,
-				td {
-					border: 1px solid $bordercolor;
-					padding: 8px;
-					text-align: left;
-				}
-
-				th {
-					background-color: $bgcolor;
-				}
-
-				tr:nth-child(even) {
-					background-color: $darker;
-				}
-			}
-		}
 	}
 
 	.total-geral {

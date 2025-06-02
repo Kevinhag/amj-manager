@@ -147,6 +147,7 @@
 		}
 
 		let formaPagCompleta = formaPagamento;
+		
 		if (formaPagamento === 'Crédito parcelado' || formaPagamento === 'Parcelado') {
 			formaPagCompleta += ` em ${parcelas}`;
 		}

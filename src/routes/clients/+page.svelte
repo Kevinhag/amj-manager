@@ -432,7 +432,7 @@
 
 
 <style lang="scss">
-	@import 'src/lib/styles/select.scss';
+	// @import 'src/lib/styles/select.scss';
 	@import 'src/lib/styles/buttons.scss';
 	@import 'src/lib/styles/mixins.scss';
 

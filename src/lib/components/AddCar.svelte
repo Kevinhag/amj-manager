@@ -13,28 +13,8 @@
 	let searchQuery = ''; // Armazena o valor da pesquisa do cliente
 
 	onMount(() => {
-		// fetchCars();
-		// fetchClients();
 		fetchData();
 	});
-
-	/* 	async function fetchCars() {
-		try {
-			const response = await fetch('http://localhost:3000/api/cars');
-			cars = await response.json();
-		} catch (error) {
-			console.error('Erro ao buscar carros:', error);
-		}
-	}
-
-	async function fetchClients() {
-		try {
-			const response = await fetch('http://localhost:3000/api/clients');
-			clients = await response.json();
-		} catch (error) {
-			console.error('Erro ao buscar clientes:', error);
-		}
-	} */
 
 	async function fetchData() {
 		try {
@@ -49,10 +29,9 @@
 
 			cars = await carResponse.json();
 			clients = await clientResponse.json();
-			// console.log('Carros:', cars);
-			// console.log('Clientes:', clients);
+
 		} catch (error) {
-			// console.error('Error fetching data:', error);
+
 			showNotification('Error fetching data: ' + error.message, 'error');
 		}
 	}
